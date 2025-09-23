@@ -967,7 +967,7 @@ const courseData = {
           "Cap pass finishing methods",
           "Rolling vs. fixed position welding"
         ]
-      }      
+      }
     }
   },
 "68885cf5d486bba2975cdca8": {

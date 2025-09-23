@@ -241,6 +241,8 @@ const TaskModulePage = () => {
           console.log('📊 Setting unlock status with', data.lessonUnlockStatus.length, 'items');
           data.lessonUnlockStatus.forEach((status, index) => {
             console.log(`📋 Status ${index}:`, status);
+            console.log(`📋 Status ${index} lessonId:`, status.lessonId);
+            console.log(`📋 Status ${index} isCompleted:`, status.isCompleted);
           });
           setUnlockStatus(data.lessonUnlockStatus);
         } else {
@@ -309,6 +311,18 @@ const TaskModulePage = () => {
       window.removeEventListener('pageshow', handlePageLoad);
     };
   }, [courseDetails?.name, fetchUnlockStatus, fetchQuizCompletionStatus]);
+
+  // Force refresh completion status when component mounts (for welding course specifically)
+  useEffect(() => {
+    if (courseDetails?.name === 'Welding' || courseDetails?.title === 'Welding') {
+      console.log("🔧 Welding course detected - forcing completion status refresh");
+      // Add a small delay to ensure other data is loaded first
+      setTimeout(() => {
+        fetchUnlockStatus();
+        fetchQuizCompletionStatus();
+      }, 1000);
+    }
+  }, [courseDetails?.name, courseDetails?.title, fetchUnlockStatus, fetchQuizCompletionStatus]);
 
   useEffect(() => {
     const initializePage = async () => {
@@ -387,6 +401,14 @@ const TaskModulePage = () => {
   const getModuleIdFromLessonKey = (lessonKey) => {
     console.log('🔑 Mapping lesson key to module ID:', lessonKey);
     
+    // If the lessonKey is already in the correct format (like WELDING04), return it as is
+    if (lessonKey && (lessonKey.startsWith('WELDING') || lessonKey.startsWith('FACTORY') || 
+        lessonKey.startsWith('ISP') || lessonKey.startsWith('POSH') || 
+        lessonKey.startsWith('GDPR') || lessonKey.startsWith('CNC') || lessonKey.startsWith('VRU'))) {
+      console.log('🔑 Lesson key is already in correct format:', lessonKey);
+      return lessonKey;
+    }
+    
     // For assigned courses, the lessonKey is already the correct ID (module title)
     // For common courses, we might need mapping
     const moduleMapping = {
@@ -394,8 +416,8 @@ const TaskModulePage = () => {
       'POSH01': 'POSH01', 'POSH02': 'POSH02', 'POSH03': 'POSH03', 'POSH04': 'POSH04',
       'GDPR01': 'GDPR01', 'GDPR02': 'GDPR02', 'GDPR03': 'GDPR03', 'GDPR04': 'GDPR04',
       'FACTORY01': 'FACTORY01', 'FACTORY02': 'FACTORY02', 'FACTORY03': 'FACTORY03', 'FACTORY04': 'FACTORY04',
-      'WELD01': 'WELD01', 'WELD02': 'WELD02', 'WELD03': 'WELDING03', 'WELD04': 'WELDING04',
-      'WELDING01': 'WELDING01', 'WELDING02': 'WELDING02', 'WELDING03': 'WELDING03', 'WELDING04': 'WELDING04',
+      'WELD01': 'WELD01', 'WELD02': 'WELD02', 'WELD03': 'WELD03', 'WELD04': 'WELD04',
+      'WELDING01': 'WELD01', 'WELDING02': 'WELD02', 'WELDING03': 'WELD03', 'WELDING04': 'WELD04',
       'CNC01': 'CNC01', 'CNC02': 'CNC02', 'CNC03': 'CNC03', 'CNC04': 'CNC04',
       'VRU01': 'VRU01', 'VRU02': 'VRU02', 'VRU03': 'VRU03', 'VRU04': 'VRU04',
       // Add mappings for e-learning modules
@@ -419,6 +441,7 @@ const TaskModulePage = () => {
     if (!Array.isArray(unlockStatus)) return false;
     const moduleId = getModuleIdFromLessonKey(moduleTitle);
     const lessonStatus = unlockStatus.find(status => status.lessonId === moduleId);
+    console.log('🔍 Checking lesson completion:', { moduleTitle, moduleId, lessonStatus, isCompleted: lessonStatus?.isCompleted });
     return lessonStatus ? lessonStatus.isCompleted : false;
   };
 
@@ -635,6 +658,9 @@ const TaskModulePage = () => {
         <div className="header-right">
           <button className="refresh-btn" onClick={() => {
             console.log('🔄 Manual refresh triggered');
+            console.log('🔧 Current course details:', courseDetails);
+            console.log('🔧 Current unlock status:', unlockStatus);
+            console.log('🔧 Current quiz completion status:', quizCompletionStatus);
             fetchQuizCompletionStatus();
             fetchUnlockStatus();
           }} disabled={fetchingQuizStatus || fetchingUnlockStatus}>
@@ -733,8 +759,10 @@ const TaskModulePage = () => {
   <h2 className="sidebar-title">Courses</h2>
   <div className="modules-list">
     {courseDetails?.modules?.map((module, index) => {
-      const isUnlocked = isLessonUnlocked(module.title, index);
-      const isCompleted = isLessonCompleted(module.title);
+      // Use m_id for backend course data, fallback to title for static course data
+      const moduleIdentifier = module.m_id || module.title;
+      const isUnlocked = isLessonUnlocked(moduleIdentifier, index);
+      const isCompleted = isLessonCompleted(moduleIdentifier);
       const isCurrentModule = selectedModule?.title === module.title;
 
       return (
@@ -759,9 +787,21 @@ const TaskModulePage = () => {
   <h2 className="sidebar-title">Practice Quiz</h2>
   <div className="modules-list">
     {courseDetails?.modules?.map((module, index) => {
-      const isQuizUnlocked = isQuizAvailable(module.title, index);
-      const quizCompleted = isQuizCompleted(module.title);
+      // Use m_id for backend course data, fallback to title for static course data
+      const moduleIdentifier = module.m_id || module.title;
+      const isQuizUnlocked = isQuizAvailable(moduleIdentifier, index);
+      const quizCompleted = isQuizCompleted(moduleIdentifier);
       const isCurrentModule = selectedModule?.title === module.title;
+      
+      console.log('🔍 Quiz status check:', { 
+        moduleTitle: module.title, 
+        moduleId: module.m_id, 
+        moduleIdentifier, 
+        index, 
+        isQuizUnlocked, 
+        quizCompleted,
+        unlockStatus: unlockStatus.length
+      });
 
       return (
         <button

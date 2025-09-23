@@ -89,8 +89,12 @@ const Quiz = () => {
       'FACT04': 'FACT04',
       'WELD01': 'WELD01',
       'WELD02': 'WELD02',
-      'WELD03': 'WELDING03',
-      'WELD04': 'WELDING04',
+      'WELD03': 'WELD03',
+      'WELD04': 'WELD04',
+      'WELDING01': 'WELD01',
+      'WELDING02': 'WELD02',
+      'WELDING03': 'WELD03',
+      'WELDING04': 'WELD04',
       'CNC01': 'CNC01',
       'CNC02': 'CNC02',
       'CNC03': 'CNC03',
@@ -220,6 +224,8 @@ const Quiz = () => {
       if (response.ok) {
         const data = await response.json();
         console.log('Quiz access check - unlock status:', data.lessonUnlockStatus);
+        console.log('Quiz access check - available lesson IDs:', data.lessonUnlockStatus.map(s => s.lessonId));
+        console.log('Quiz access check - looking for moduleId:', moduleId);
         const lessonStatus = data.lessonUnlockStatus.find(lesson => lesson.lessonId === moduleId);
         console.log('Quiz access check - lesson status for', moduleId, ':', lessonStatus);
         

@@ -622,6 +622,26 @@
   color: #3b82f6;
 }
 
+/* Quiz completion styling */
+.quiz-button.completed {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%) !important;
+  border-color: #22c55e !important;
+  border-left-color: #22c55e !important;
+  color: #155724 !important;
+}
+
+.quiz-button.completed:hover {
+  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%) !important;
+  border-color: #16a34a !important;
+  border-left-color: #16a34a !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(34, 197, 94, 0.15);
+}
+
+.quiz-button.completed .check-icon {
+  color: #16a34a !important;
+}
+
 /* Video completion overlay */
 .video-completed-overlay {
   position: absolute;
