@@ -1,9 +1,10 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import courseImg from "../assets/course.jpg";
-import { User, ArrowRight, ArrowLeft } from "lucide-react";
+import { User, ArrowRight, ArrowLeft, Home } from "lucide-react";
 
 const Lesson03GDPR = () => {
+  const navigate = useNavigate();
   const currentLessonNumber = 3;
   const lessons = [
     { id: 1, title: "Lesson 01: Introduction to Data Protection", path: "/contentpage" },
@@ -82,12 +83,44 @@ const Lesson03GDPR = () => {
   return (
     <div style={{ padding: "20px", fontFamily: "Arial" }}>
       {/* Header Section */}
-      <div style={{ marginBottom: "20px" }}>
-        <h1>
-          Learn about <span style={{ color: "#4caf50" }}>ISP, GDPR & Compliance</span>
-        </h1>
-        <p>Basics of General Data Protection Regulation (GDPR)</p>
-        <div style={{ fontWeight: "bold" }}>30 mins</div>
+      <div style={{ marginBottom: "20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div>
+          <h1>
+            Learn about <span style={{ color: "#4caf50" }}>ISP, GDPR & Compliance</span>
+          </h1>
+          <p>Basics of General Data Protection Regulation (GDPR)</p>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+          <button 
+            onClick={() => navigate('/')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '8px 16px',
+              backgroundColor: '#f8f9fa',
+              border: '1px solid #dee2e6',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: '500',
+              color: '#495057',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseOver={(e) => {
+              e.target.style.backgroundColor = '#e9ecef';
+              e.target.style.borderColor = '#adb5bd';
+            }}
+            onMouseOut={(e) => {
+              e.target.style.backgroundColor = '#f8f9fa';
+              e.target.style.borderColor = '#dee2e6';
+            }}
+          >
+            <Home size={16} />
+            Back to Home
+          </button>
+          <div style={{ fontWeight: "bold" }}>30 mins</div>
+        </div>
       </div>
 
       <div style={{ display: "flex", gap: "30px" }}>

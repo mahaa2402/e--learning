@@ -159,35 +159,43 @@ const Quiz = () => {
           return;
         }
 
+        // First check quiz access (completion status)
+        const accessResult = await checkQuizAccess();
+        
+        // For sequential courses (like POSH), don't apply global cooldown
+        // Only show cooldown if the specific quiz was failed recently
         const courseName = getCourseName();
-        console.log('🔍 Checking quiz availability for course:', courseName);
+        const isSequentialCourse = ['POSH', 'Welding', 'GDPR', 'ISP', 'Factory Act', 'CNC'].includes(courseName);
+        
+        if (!accessResult.isCompleted && !accessResult.canTake && !isSequentialCourse) {
+          console.log('🔍 Checking quiz availability for course:', courseName);
 
-        const response = await fetch('http://localhost:5000/api/courses/check-quiz-availability', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({ courseName })
-        });
+          const response = await fetch('http://localhost:5000/api/courses/check-quiz-availability', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ courseName })
+          });
 
-        if (response.ok) {
-          const result = await response.json();
-          console.log('📊 Quiz availability result:', result);
+          if (response.ok) {
+            const result = await response.json();
+            console.log('📊 Quiz availability result:', result);
 
-          if (!result.canTake) {
-            setQuizBlocked(true);
-            setCooldownTime(result.cooldown);
-            setError(`Quiz is not available yet. You can retry in ${result.cooldown.hours}h ${result.cooldown.minutes}m`);
-            setAccessChecking(false);
-            return;
+            if (!result.canTake) {
+              setQuizBlocked(true);
+              setCooldownTime(result.cooldown);
+              setError(`Quiz is not available yet. You can retry in ${result.cooldown.hours}h ${result.cooldown.minutes}m`);
+              setAccessChecking(false);
+              return;
+            }
+          } else {
+            console.log('⚠️ Quiz availability check failed, proceeding with normal access check');
           }
-        } else {
-          console.log('⚠️ Quiz availability check failed, proceeding with normal access check');
+        } else if (isSequentialCourse) {
+          console.log('🔄 Sequential course detected, skipping global cooldown check');
         }
-
-        // Continue with normal access checking
-        checkQuizAccess();
       } catch (error) {
         console.error('❌ Error checking quiz availability:', error);
         // Continue with normal access checking even if timestamp check fails
@@ -209,7 +217,7 @@ const Quiz = () => {
         console.log('No token or email found, allowing access');
         setQuizAccessAllowed(true);
         setAccessChecking(false);
-        return;
+        return { isCompleted: false, canTake: true };
       }
 
       const courseName = getCourseName();
@@ -235,23 +243,28 @@ const Quiz = () => {
             console.log('Quiz access check - quiz already completed, locking access');
             setQuizAccessAllowed(false);
             setQuizCompleted(true);
+            return { isCompleted: true, canTake: false };
           } else {
             console.log('Quiz access check - canTakeQuiz:', lessonStatus.canTakeQuiz);
             setQuizAccessAllowed(lessonStatus.canTakeQuiz);
             setQuizCompleted(false);
+            return { isCompleted: false, canTake: lessonStatus.canTakeQuiz };
           }
         } else {
           // If lesson not found in progress, allow access (fallback)
           console.log('Quiz access check - lesson not found, allowing access');
           setQuizAccessAllowed(true);
+          return { isCompleted: false, canTake: true };
         }
       } else {
         console.log('Failed to check quiz access, allowing access');
         setQuizAccessAllowed(true);
+        return { isCompleted: false, canTake: true };
       }
     } catch (error) {
       console.error('Error checking quiz access:', error);
       setQuizAccessAllowed(true); // Allow access on error
+      return { isCompleted: false, canTake: true };
     } finally {
       setAccessChecking(false);
     }
@@ -455,6 +468,15 @@ const Quiz = () => {
           localStorage.setItem("levelCleared", updatedLevel);
           
           console.log('Updated level cleared to:', updatedLevel);
+          
+          // Trigger refresh event for taskmodulepage to update completion status
+          window.dispatchEvent(new CustomEvent('quizCompleted', { 
+            detail: { 
+              moduleId: m_id, 
+              courseId: courseId,
+              courseName: courseName 
+            } 
+          }));
 
           // Check if course is completed - ALWAYS check, not just for final module
           const currentCourseName = getCourseName();
@@ -469,13 +491,21 @@ const Quiz = () => {
               },
               body: JSON.stringify({
                 courseName: currentCourseName,
-                courseId: courseId
+                courseId: courseId,
+                userEmail: userEmail
               }),
             });
 
             if (certificateResponse.ok) {
               const certificateResult = await certificateResponse.json();
               console.log('Course completion check result:', certificateResult);
+              console.log('🔍 Factory Act completion details:', {
+                courseName: currentCourseName,
+                success: certificateResult.success,
+                isCompleted: certificateResult.isCompleted,
+                message: certificateResult.message,
+                completionStatus: certificateResult.completionStatus
+              });
 
               if (certificateResult.success && certificateResult.isCompleted) {
                 console.log('Course completed! Certificate generated:', certificateResult.certificate);
@@ -487,6 +517,12 @@ const Quiz = () => {
                 localStorage.setItem('completedCourseName', currentCourseName);
               } else {
                 console.log('Course still in progress:', certificateResult.message);
+                console.log('🔍 Why not completed?', {
+                  success: certificateResult.success,
+                  isCompleted: certificateResult.isCompleted,
+                  progress: certificateResult.progress,
+                  completionStatus: certificateResult.completionStatus
+                });
                 setIsCourseCompleted(false);
                 localStorage.setItem('courseCompleted', 'false');
               }

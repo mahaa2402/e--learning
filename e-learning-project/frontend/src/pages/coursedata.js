@@ -806,9 +806,9 @@ const courseData = {
 }
 ,
      "FACT03": {
-  "title": "Employee Rights & Grievance Redressal",
-  "videoUrl": "https://intern-vista-work-space.s3.eu-north-1.amazonaws.com/e-learning/Module_2+Course_2.mp4",
-  "content": [
+  title: "Employee Rights & Grievance Redressal",
+  videoUrl: "https://intern-vista-work-space.s3.eu-north-1.amazonaws.com/e-learning/Module_2+Course_2.mp4",
+  content: [
     "Fundamental Employee Rights: Every worker has the right to fair wages, safe working conditions, reasonable working hours, and weekly rest days. Additional rights include paid leave, overtime wages, and access to health and welfare facilities such as first aid, clean drinking water, and sanitation.",
     
     "Right to Equal Treatment: Employees are entitled to equal opportunity without discrimination based on gender, caste, religion, or background. Equal pay for equal work is a legal requirement, and women workers are entitled to maternity benefits and safe work environments.",

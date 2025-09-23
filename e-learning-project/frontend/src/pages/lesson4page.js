@@ -1,10 +1,12 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "./lesson1page.css";
 import hsiImg from "../assets/hsi.jpg";
-import { User, ArrowRight, ArrowLeft } from "lucide-react";
+import { User, ArrowRight, ArrowLeft, Home } from "lucide-react";
 
 const Lesson04SensitiveInfo = () => {
+  const navigate = useNavigate();
+  
   return (
     <div className="course-page">
       {/* Header Section */}
@@ -15,7 +17,38 @@ const Lesson04SensitiveInfo = () => {
           </h1>
           <p>Handling Sensitive Information</p>
         </div>
-        <div className="course-duration">30 mins</div>
+        <div className="course-header-actions">
+          <button 
+            onClick={() => navigate('/')}
+            className="back-to-home-btn"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '8px 16px',
+              backgroundColor: '#f8f9fa',
+              border: '1px solid #dee2e6',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: '500',
+              color: '#495057',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseOver={(e) => {
+              e.target.style.backgroundColor = '#e9ecef';
+              e.target.style.borderColor = '#adb5bd';
+            }}
+            onMouseOut={(e) => {
+              e.target.style.backgroundColor = '#f8f9fa';
+              e.target.style.borderColor = '#dee2e6';
+            }}
+          >
+            <Home size={16} />
+            Back to Home
+          </button>
+          <div className="course-duration">30 mins</div>
+        </div>
       </div>
 
       <div className="course-main">

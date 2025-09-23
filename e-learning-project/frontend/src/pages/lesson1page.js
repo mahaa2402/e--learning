@@ -1,11 +1,12 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Link } from "react-router-dom"; // Make sure to install react-router-dom
+import { Link, useNavigate } from "react-router-dom"; // Make sure to install react-router-dom
 import "./lesson1page.css";
 import courseImg from "../assets/course.jpg"; // Replace with your image path
 import lesson4Video from "../assets/lesson4video2.mp4";
-import { User, ArrowRight, ArrowLeft, Lock, CheckCircle } from "lucide-react";
+import { User, ArrowRight, ArrowLeft, Lock, CheckCircle, Home } from "lucide-react";
 
 const CourseDetail = () => {
+  const navigate = useNavigate();
   const [videoCompleted, setVideoCompleted] = useState(() => localStorage.getItem('lesson1VideoCompleted') === 'true');
   const [quizStatus, setQuizStatus] = useState({
     quiz1Passed: localStorage.getItem('quiz1Passed') === 'true',
@@ -182,7 +183,38 @@ const CourseDetail = () => {
           </h1>
           <p>Introduction to Data Protection</p>
         </div>
-        <div className="course-duration">1 hour</div>
+        <div className="course-header-actions">
+          <button 
+            onClick={() => navigate('/')}
+            className="back-to-home-btn"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '8px 16px',
+              backgroundColor: '#f8f9fa',
+              border: '1px solid #dee2e6',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: '500',
+              color: '#495057',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseOver={(e) => {
+              e.target.style.backgroundColor = '#e9ecef';
+              e.target.style.borderColor = '#adb5bd';
+            }}
+            onMouseOut={(e) => {
+              e.target.style.backgroundColor = '#f8f9fa';
+              e.target.style.borderColor = '#dee2e6';
+            }}
+          >
+            <Home size={16} />
+            Back to Home
+          </button>
+          <div className="course-duration">1 hour</div>
+        </div>
       </div>
 
       <div className="course-main">

@@ -135,13 +135,7 @@ async function createCourses() {
             description: 'Meeting compliance standards.',
             lessons: 4
           },
-          {
-            m_id: 'FACTORY04',
-            name: 'Employee Rights & Grievance Redressal',
-            duration: 90,
-            description: 'Employee rights and grievance procedures.',
-            lessons: 4
-          }
+         
         ]
       },
       {

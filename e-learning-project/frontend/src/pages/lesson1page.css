@@ -15,6 +15,12 @@
   align-items: center;
 }
 
+.course-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
 .course-header-text h1 {
   font-size: 24px;
   font-weight: bold;

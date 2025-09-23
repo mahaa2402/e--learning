@@ -324,6 +324,33 @@ const TaskModulePage = () => {
     }
   }, [courseDetails?.name, courseDetails?.title, fetchUnlockStatus, fetchQuizCompletionStatus]);
 
+  // Listen for quiz completion events to refresh unlock status
+  useEffect(() => {
+    const handleQuizCompleted = (event) => {
+      const { moduleId, courseId, courseName } = event.detail;
+      console.log('🎉 Quiz completed event received:', { moduleId, courseId, courseName });
+      
+      // Check if this completion is for the current course
+      const currentCourseId = courseDetails?._id || courseDetails?.id;
+      const currentCourseName = courseDetails?.name || courseDetails?.title;
+      
+      if (courseId === currentCourseId || courseName === currentCourseName) {
+        console.log('🔄 Refreshing unlock status for current course...');
+        // Add a small delay to ensure backend has processed the completion
+        setTimeout(() => {
+          fetchUnlockStatus();
+          fetchQuizCompletionStatus();
+        }, 500);
+      }
+    };
+
+    window.addEventListener('quizCompleted', handleQuizCompleted);
+    
+    return () => {
+      window.removeEventListener('quizCompleted', handleQuizCompleted);
+    };
+  }, [courseDetails, fetchUnlockStatus, fetchQuizCompletionStatus]);
+
   useEffect(() => {
     const initializePage = async () => {
       try {
@@ -438,10 +465,20 @@ const TaskModulePage = () => {
 
   // Check if lesson is completed
   const isLessonCompleted = (moduleTitle) => {
-    if (!Array.isArray(unlockStatus)) return false;
+    if (!Array.isArray(unlockStatus)) {
+      console.log('🔍 No unlock status available for completion check:', moduleTitle);
+      return false;
+    }
     const moduleId = getModuleIdFromLessonKey(moduleTitle);
     const lessonStatus = unlockStatus.find(status => status.lessonId === moduleId);
-    console.log('🔍 Checking lesson completion:', { moduleTitle, moduleId, lessonStatus, isCompleted: lessonStatus?.isCompleted });
+    console.log('🔍 Checking lesson completion:', { 
+      moduleTitle, 
+      moduleId, 
+      lessonStatus, 
+      isCompleted: lessonStatus?.isCompleted,
+      unlockStatusCount: unlockStatus.length,
+      allLessonIds: unlockStatus.map(s => s.lessonId)
+    });
     return lessonStatus ? lessonStatus.isCompleted : false;
   };
 
