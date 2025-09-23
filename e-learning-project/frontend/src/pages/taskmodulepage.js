@@ -394,8 +394,10 @@ const TaskModulePage = () => {
       'POSH01': 'POSH01', 'POSH02': 'POSH02', 'POSH03': 'POSH03', 'POSH04': 'POSH04',
       'GDPR01': 'GDPR01', 'GDPR02': 'GDPR02', 'GDPR03': 'GDPR03', 'GDPR04': 'GDPR04',
       'FACTORY01': 'FACTORY01', 'FACTORY02': 'FACTORY02', 'FACTORY03': 'FACTORY03', 'FACTORY04': 'FACTORY04',
+      'WELD01': 'WELD01', 'WELD02': 'WELD02', 'WELD03': 'WELDING03', 'WELD04': 'WELDING04',
       'WELDING01': 'WELDING01', 'WELDING02': 'WELDING02', 'WELDING03': 'WELDING03', 'WELDING04': 'WELDING04',
       'CNC01': 'CNC01', 'CNC02': 'CNC02', 'CNC03': 'CNC03', 'CNC04': 'CNC04',
+      'VRU01': 'VRU01', 'VRU02': 'VRU02', 'VRU03': 'VRU03', 'VRU04': 'VRU04',
       // Add mappings for e-learning modules
       'e-learn-module1': 'e-learn-module1',
       'e-learn-mod2': 'e-learn-mod2',

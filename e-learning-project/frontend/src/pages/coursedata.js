@@ -787,24 +787,46 @@ const courseData = {
           "Emergency response and safety plans"
         ]
       },
-      "FACT03": {
-        title: "Legal Compliance & Inspections",
-        videoUrl: "https://intern-vista-work-space.s3.eu-north-1.amazonaws.com/e-learning/Module_2+Course_1.mp4",
-        content: [
-          "Role of factory inspectors and frequency of inspections.",
-          "Common violations and penalties.",
-          "Maintaining records and documentation compliance."
-        ]
-      },
-      "FACT04": {
-        title: "Employee Rights & Grievance Redressal",
-        videoUrl: "https://intern-vista-work-space.s3.eu-north-1.amazonaws.com/e-learning/Module_2+Course_1.mp4",
-        content: [
-          "Rights of factory workers under the Act.",
-          "Process for addressing complaints and grievances.",
-          "Safety training and representation in safety committees."
-        ]
-      }
+     "FACT02": {
+  title: "Legal Compliance & Inspections",
+  videoUrl: "https://intern-vista-work-space.s3.eu-north-1.amazonaws.com/e-learning/Module_2+Course_1.mp4",
+  content: [
+    "Role of Factory Inspectors and Frequency of Inspections: Inspectors act as regulatory authorities ensuring compliance with the Factories Act and related laws. Their role covers examining working conditions, machinery safety, employee welfare, and environmental safeguards. Inspections may be routine (scheduled), surprise (without prior notice), or complaint-driven. High-risk industries such as chemical, heavy engineering, and mining units face stricter and more frequent inspections.",
+    
+    "Common Violations and Penalties: Violations often include non-payment of minimum wages, employing underage workers, unsafe machinery, poor ventilation and sanitation, lack of protective equipment, and improper handling of hazardous materials. Environmental violations like untreated effluent discharge or air pollution are also common. Penalties range from monetary fines, warnings, and suspension of operations, to criminal prosecution of owners and managers in case of severe negligence or accidents.",
+    
+    "Maintaining Records and Documentation Compliance: Factories must maintain proper documentation as per legal requirements. This includes employee attendance and wage registers, accident and injury logs, equipment maintenance records, environmental reports, and statutory forms related to safety drills and medical examinations. Accurate documentation not only ensures compliance but also acts as evidence during inspections and audits.",
+    
+    "Rights and Powers of Inspectors: Inspectors are authorized to enter factory premises, examine records, interview employees, and issue improvement or prohibition notices. They can also collect samples, order stoppage of unsafe machinery, and recommend prosecution if violations are serious.",
+    
+    "Best Practices for Compliance: Factories should implement regular internal audits, provide safety training for workers, adopt the 5S methodology for housekeeping, and establish a compliance calendar to track legal obligations. Proactive compliance reduces inspection risks and promotes a safe work culture.",
+    
+    "Importance of Worker Awareness: Educating workers about their rights, safety measures, and reporting channels ensures better compliance. Worker cooperation helps management prevent violations before inspections occur."
+  ]
+}
+,
+     "FACT03": {
+  "title": "Employee Rights & Grievance Redressal",
+  "videoUrl": "https://intern-vista-work-space.s3.eu-north-1.amazonaws.com/e-learning/Module_2+Course_2.mp4",
+  "content": [
+    "Fundamental Employee Rights: Every worker has the right to fair wages, safe working conditions, reasonable working hours, and weekly rest days. Additional rights include paid leave, overtime wages, and access to health and welfare facilities such as first aid, clean drinking water, and sanitation.",
+    
+    "Right to Equal Treatment: Employees are entitled to equal opportunity without discrimination based on gender, caste, religion, or background. Equal pay for equal work is a legal requirement, and women workers are entitled to maternity benefits and safe work environments.",
+    
+    "Right to Safe Workplace: Workers must be provided with protective equipment, safety training, emergency exits, and medical support. Hazardous industries are obligated to conduct regular safety drills and health check-ups.",
+    
+    "Grievance Redressal Mechanism: Employees can raise complaints related to wages, harassment, unsafe conditions, discrimination, or unfair dismissal. Factories are required to establish internal grievance redressal committees and display clear procedures for lodging complaints.",
+    
+    "Role of Works Committees & Unions: Works committees or employee unions serve as a bridge between management and employees, helping resolve disputes before they escalate. They play a crucial role in collective bargaining and ensuring worker rights are upheld.",
+    
+    "Escalation & Legal Remedies: If internal mechanisms fail, employees may approach labor courts, industrial tribunals, or government labor departments. Legal remedies include reinstatement, compensation, or penalties against management.",
+    
+    "Best Practices for Employers: Management should encourage open communication, maintain transparent HR policies, conduct regular employee feedback sessions, and establish a fair disciplinary system. Proactive grievance handling builds trust and reduces workplace conflicts.",
+    
+    "Importance of Awareness: Employees must be educated about their rights, workplace policies, and available grievance channels through orientation sessions and training programs. Awareness empowers workers to speak up and ensures better compliance with labor laws."
+  ]
+}
+
     }
   },
   "68885c86d486bba2975cdca6": {
@@ -815,7 +837,7 @@ const courseData = {
         videoUrl: "https://intern-vista-work-space.s3.eu-north-1.amazonaws.com/e-learning/Module_2+Course_1.mp4",
         content: [
           "Introduction to Industrial Work Environment:",
-          "",
+          ,
           "Understanding the Mechanical Shop Floor:",
           "Layout and organization of industrial workspaces",
           "Different work zones: welding, machining, assembly, storage",
@@ -945,44 +967,7 @@ const courseData = {
           "Cap pass finishing methods",
           "Rolling vs. fixed position welding"
         ]
-      },
-      "WELD04": {
-        title: "Fitting Techniques & Maintenance",
-        videoUrl: "https://intern-vista-work-space.s3.eu-north-1.amazonaws.com/e-learning/Module_2+Course_1.mp4",
-        content: [
-           "Welding Equipment Components:",
-          "",
-          "Power Source Maintenance:",
-          "Cleaning cooling system components",
-          "Inspecting and replacing filters",
-          "Checking electrical connections and torque",
-          "Calibrating voltage and amperage settings",
-          "Troubleshooting common power source issues",
-          "",
-          "Wire Feed System Care:",
-          "Drive roll selection and adjustment",
-          "Liner replacement and sizing",
-          "Contact tip maintenance and replacement",
-          "Gun cable and connection inspection",
-          "Wire feed speed calibration",
-          "",
-          "Gas System Maintenance:",
-          "Regulator and flowmeter calibration",
-          "Hose inspection and replacement",
-          "Leak testing procedures",
-          "Gas quality and contamination issues",
-          "Proper storage and handling of gas cylinders",
-          "",
-          "Preventive Maintenance Schedules:",
-          "",
-          "Daily Maintenance Tasks:",
-          "Visual inspection of equipment condition",
-          "Cleaning spatter from gun and cables",
-          "Checking consumable levels and condition",
-          "Verifying proper gas flow and pressure",
-          "Recording any unusual observations"
-        ]
-      }
+      }      
     }
   },
 "68885cf5d486bba2975cdca8": {

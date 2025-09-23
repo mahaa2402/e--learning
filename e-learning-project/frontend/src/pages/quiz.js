@@ -68,6 +68,41 @@ const Quiz = () => {
     return 'ISP';
   };
 
+  // Map lesson keys to module IDs for backend compatibility
+  const getModuleIdFromLessonKey = (lessonKey) => {
+    const moduleMapping = {
+      'ISP01': 'ISP01',
+      'ISP02': 'ISP02', 
+      'ISP03': 'ISP03',
+      'ISP04': 'ISP04',
+      'POSH01': 'POSH01',
+      'POSH02': 'POSH02',
+      'POSH03': 'POSH03', 
+      'POSH04': 'POSH04',
+      'GDPR01': 'GDPR01',
+      'GDPR02': 'GDPR02',
+      'GDPR03': 'GDPR03',
+      'GDPR04': 'GDPR04',
+      'FACT01': 'FACT01',
+      'FACT02': 'FACT02',
+      'FACT03': 'FACT03',
+      'FACT04': 'FACT04',
+      'WELD01': 'WELD01',
+      'WELD02': 'WELD02',
+      'WELD03': 'WELDING03',
+      'WELD04': 'WELDING04',
+      'CNC01': 'CNC01',
+      'CNC02': 'CNC02',
+      'CNC03': 'CNC03',
+      'CNC04': 'CNC04',
+      'VRU01': 'VRU01',
+      'VRU02':'VRU02',
+      'VRU03':'VRU03',
+      'VRU04':'VRU04'
+    };
+    return moduleMapping[lessonKey] || lessonKey;
+  };
+
   // Check if current module is the final module for the course
   const isFinalModule = (mo_id, courseName) => {
     if (!mo_id || !courseName) return false;
@@ -174,42 +209,6 @@ const Quiz = () => {
       }
 
       const courseName = getCourseName();
-      
-      // Map lesson keys to module IDs for backend compatibility
-      const getModuleIdFromLessonKey = (lessonKey) => {
-        const moduleMapping = {
-          'ISP01': 'ISP01',
-          'ISP02': 'ISP02', 
-          'ISP03': 'ISP03',
-          'ISP04': 'ISP04',
-          'POSH01': 'POSH01',
-          'POSH02': 'POSH02',
-          'POSH03': 'POSH03', 
-          'POSH04': 'POSH04',
-          'GDPR01': 'GDPR01',
-          'GDPR02': 'GDPR02',
-          'GDPR03': 'GDPR03',
-          'GDPR04': 'GDPR04',
-          'FACT01': 'FACT01',
-          'FACT02': 'FACT02',
-          'FACT03': 'FACT03',
-          'FACT04': 'FACT04',
-          'WELD01': 'WELD01',
-          'WELD02': 'WELD02',
-          'WELD03': 'WELDING03',
-          'WELD04': 'WELDING04',
-          'CNC01': 'CNC01',
-          'CNC02': 'CNC02',
-          'CNC03': 'CNC03',
-          'CNC04': 'CNC04',
-          'VRU01': 'VRU01',
-          'VRU02':'VRU02',
-          'VRU03':'VRU03',
-          'VRU04':'VRU04'
-        };
-        return moduleMapping[lessonKey] || lessonKey;
-      };
-
       const moduleId = getModuleIdFromLessonKey(mo_id);
       
       const response = await fetch(`http://localhost:5000/api/progress/get-with-unlocking?userEmail=${userEmail}&courseName=${courseName}&courseId=${courseId}`, {
@@ -418,7 +417,7 @@ const Quiz = () => {
       const token = localStorage.getItem('authToken') || localStorage.getItem('token');
       const userEmail = email;
       const courseName = getCourseName();
-      const m_id = mo_id;
+      const m_id = getModuleIdFromLessonKey(mo_id);
       const completedAt = new Date().toISOString();
 
       try {

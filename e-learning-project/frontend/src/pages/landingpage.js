@@ -194,7 +194,7 @@ function LandingPage() {
 
       {/* Our Courses Section - Always visible when logged in */}
       {isLoggedIn && (
-        <section className="courses-section">
+        <section className="courses-section" id="#courses">
           <div className="container">
             <h2 style={{ textAlign: "center" }} className="section-title2">Our Courses</h2>
             

@@ -387,10 +387,10 @@ const fetchAdminProfile = async () => {
               <div className="logo-subtitle">InnovativeLearning</div>
             </div>
             <nav className="nav">
-              <a href="#" className="nav-link">Home</a>
-              <a href="#" className="nav-link">Courses</a>
-              <a href="#" className="nav-link">Certifications</a>
-              <a href="#" className="nav-link">About</a>
+              <a href="./" className="nav-link">Home</a>
+              <a href="/#courses" className="nav-link">Courses</a>
+             
+              
             </nav>
           </div>
         </div>
