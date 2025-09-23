@@ -1,11 +1,29 @@
 import React from 'react';
-import { BarChart, Zap, Users, Activity, HelpCircle, Settings } from 'lucide-react';
+import { BarChart, Zap, Users, Activity, HelpCircle, Settings, LogOut } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import './Sidebar.css';
 
 const Sidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Logout function
+  const handleLogout = () => {
+    // Clear all authentication data from localStorage
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('token');
+    localStorage.removeItem('userSession');
+    localStorage.removeItem('user');
+    localStorage.removeItem('employeeEmail');
+    localStorage.removeItem('levelCleared');
+    
+    // Clear any course completion data
+    localStorage.removeItem('courseCompleted');
+    localStorage.removeItem('completedCourseName');
+    
+    // Navigate to main page (landing page)
+    navigate('/');
+  };
 
   const sidebarItems = [
     { 
@@ -39,7 +57,8 @@ const Sidebar = () => {
 
   const supportItems = [
     { icon: HelpCircle, label: 'Get Started' },
-    { icon: Settings, label: 'Settings' }
+    { icon: Settings, label: 'Settings' },
+    { icon: LogOut, label: 'Logout', onClick: handleLogout }
   ];
 
   return (
@@ -73,7 +92,15 @@ const Sidebar = () => {
           Support
         </div>
         {supportItems.map((item, index) => (
-          <div key={index} className="sidebar-item flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-all duration-200 mb-1 text-gray-700 hover:bg-gray-50 hover:text-gray-900">
+          <div 
+            key={index} 
+            className={`sidebar-item flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-all duration-200 mb-1 ${
+              item.label === 'Logout' 
+                ? 'text-red-600 hover:bg-red-50 hover:text-red-700' 
+                : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+            }`}
+            onClick={item.onClick}
+          >
             <item.icon className="sidebar-item-icon w-5 h-5" />
             <span className="font-medium">{item.label}</span>
           </div>
