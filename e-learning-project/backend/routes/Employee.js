@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Employee = require('../models/Employee');
 const jwt = require('jsonwebtoken');
-const Certificate = require('../models/certificate'); // Fixed path to match actual filename
+const { Certificate } = require('../controllers/CertificateController'); // Import from CertificateController
 
 
 // Authentication middleware

@@ -1096,29 +1096,22 @@ const getDashboardStats = async (req, res) => {
     }
     console.log('✅ Assessments completed today:', todayAssessments);
 
-    // 4. Certificates Issued This Week (from Employee certificates array)
+    // 4. Certificates Issued This Week (from Certificate table)
     let weekCertificates = 0;
     try {
-      const certificatesThisWeek = await Employee.aggregate([
-        {
-          $unwind: '$certificates'
-        },
-        {
-          $match: {
-            'certificates.issuedOn': {
-              $gte: startOfWeekDate
-            }
-          }
-        },
-        {
-          $count: 'total'
+      // Import Certificate model from CertificateController
+      const { Certificate } = require('./CertificateController');
+      
+      const certificatesThisWeek = await Certificate.countDocuments({
+        completionDate: {
+          $gte: startOfWeekDate
         }
-      ]);
-      weekCertificates = certificatesThisWeek.length > 0 ? certificatesThisWeek[0].total : 0;
+      });
+      weekCertificates = certificatesThisWeek;
     } catch (err) {
       console.log('⚠️ Certificates query failed:', err.message);
     }
-    console.log('🏆 Certificates issued this week:', weekCertificates);
+    console.log('🏆 Certificates issued this week from Certificate table:', weekCertificates);
 
     // 5. Pass/Fail Percentage (from EmployeeProgress quiz data)
     let passPercentage = 80; // Default value
@@ -1154,24 +1147,21 @@ const getDashboardStats = async (req, res) => {
       console.log('⚠️ Pass/Fail query failed:', err.message);
     }
 
-    // 6. Employee Learning Chart (common courses with completion counts)
+    // 6. Employee Learning Chart (common courses with completion counts from Certificate table)
     let employeeData = [];
     try {
+      // Import Certificate model from CertificateController
+      const { Certificate } = require('./CertificateController');
+      
       // Get all common courses first
       const commonCourses = await Common_Course.find({}, 'title').lean();
       console.log('📚 Common courses found:', commonCourses.length);
       
-      // Get certificate counts for each common course
-      const courseCompletionData = await Employee.aggregate([
-        {
-          $unwind: {
-            path: '$certificates',
-            preserveNullAndEmptyArrays: true
-          }
-        },
+      // Get certificate counts for each common course from Certificate collection
+      const courseCompletionData = await Certificate.aggregate([
         {
           $group: {
-            _id: '$certificates.courseTitle',
+            _id: '$courseTitle',
             count: { $sum: 1 }
           }
         }
@@ -1189,31 +1179,27 @@ const getDashboardStats = async (req, res) => {
         value: completionMap[course.title] || 0
       }));
 
-      console.log('📊 Employee learning data:', employeeData);
+      console.log('📊 Employee learning data from Certificate table:', employeeData);
     } catch (err) {
       console.log('⚠️ Course completion query failed:', err.message);
     }
 
-    // 7. Leaderboard (Top 3 employees with most certificates)
+    // 7. Leaderboard (Top 3 employees with most certificates from Certificate table)
     let leaderboard = [];
     try {
-      const leaderboardData = await Employee.aggregate([
+      // Import Certificate model from CertificateController
+      const { Certificate } = require('./CertificateController');
+      
+      const leaderboardData = await Certificate.aggregate([
         {
-          $project: {
-            name: 1,
-            email: 1,
-            certificateCount: { 
-              $cond: {
-                if: { $isArray: '$certificates' },
-                then: { $size: '$certificates' },
-                else: 0
-              }
-            },
-            totalScore: 1
+          $group: {
+            _id: '$employeeEmail',
+            employeeName: { $first: '$employeeName' },
+            certificateCount: { $sum: 1 }
           }
         },
         {
-          $sort: { certificateCount: -1, totalScore: -1 }
+          $sort: { certificateCount: -1 }
         },
         {
           $limit: 3
@@ -1221,34 +1207,31 @@ const getDashboardStats = async (req, res) => {
       ]);
 
       leaderboard = leaderboardData.map((emp, index) => ({
-        name: emp.name,
+        name: emp.employeeName,
         points: emp.certificateCount, // Use certificate count as points
         correct: Math.round(Math.random() * 20 + 80), // Placeholder calculation
         rank: index + 1,
         trend: index % 2 === 0 ? 'up' : 'down'
       }));
 
-      console.log('🏆 Leaderboard data:', leaderboard);
+      console.log('🏆 Leaderboard data from Certificate table:', leaderboard);
     } catch (err) {
       console.log('⚠️ Leaderboard query failed:', err.message);
     }
 
-    // 8. Weakest and Strongest Topics (based on certificate counts from certificates table)
+    // 8. Weakest and Strongest Topics (based on certificate counts from Certificate table)
     let weakestTopics = [];
     let strongestTopics = [];
     
     try {
-      // Get certificate counts for each course
-      const topicStats = await Employee.aggregate([
-        {
-          $unwind: {
-            path: '$certificates',
-            preserveNullAndEmptyArrays: true
-          }
-        },
+      // Import Certificate model from CertificateController
+      const { Certificate } = require('./CertificateController');
+      
+      // Get certificate counts for each course from Certificate collection
+      const topicStats = await Certificate.aggregate([
         {
           $group: {
-            _id: '$certificates.courseTitle',
+            _id: '$courseTitle',
             certificateCount: { $sum: 1 }
           }
         },
@@ -1262,7 +1245,7 @@ const getDashboardStats = async (req, res) => {
         }
       ]);
 
-      console.log('📊 Topic stats:', topicStats);
+      console.log('📊 Topic stats from Certificate table:', topicStats);
 
       if (topicStats.length > 0) {
         // Get the top 2 weakest topics (lowest certificate counts)
@@ -1301,8 +1284,8 @@ const getDashboardStats = async (req, res) => {
         }
       }
 
-      console.log('📉 Weakest topics:', weakestTopics);
-      console.log('📈 Strongest topics:', strongestTopics);
+      console.log('📉 Weakest topics from Certificate table:', weakestTopics);
+      console.log('📈 Strongest topics from Certificate table:', strongestTopics);
     } catch (err) {
       console.log('⚠️ Topic stats query failed:', err.message);
     }
