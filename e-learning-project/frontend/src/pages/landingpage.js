@@ -133,8 +133,8 @@ function LandingPage() {
           <span className="vista-pink"> Innovation@work</span>
         </div>
         <nav>
-          <Link to="/userdashboard">Home</Link>
-          {isLoggedIn && <Link to="/coursemodules">Courses</Link>}
+          <Link to="/">Home</Link>
+          {isLoggedIn &&   <a href="#courses">Courses</a>}
           {isLoggedIn && <Link to="/userdashboard">Dashboard</Link>}
           <a href="#aboutus">About</a>
         </nav>
@@ -194,7 +194,7 @@ function LandingPage() {
 
       {/* Our Courses Section - Always visible when logged in */}
       {isLoggedIn && (
-        <section className="courses-section" id="#courses">
+        <section className="courses-section" id="courses">
           <div className="container">
             <h2 style={{ textAlign: "center" }} className="section-title2">Our Courses</h2>
             

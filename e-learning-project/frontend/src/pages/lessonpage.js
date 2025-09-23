@@ -611,9 +611,11 @@ const renderFormattedContent = (contentArray) => {
           <p className="subtitle">{lesson.title}</p>
         </div>
         <div className="top-bar-actions">
-          <button className="refresh-button" onClick={fetchUserProgress} disabled={loading} title="Refresh unlock status">
+                        <a href="/" className="course-detail-nav-link">Home</a>
+
+          {/* <button className="refresh-button" onClick={fetchUserProgress} disabled={loading} title="Refresh unlock status">
             🔄 Refresh
-          </button>
+          </button> */}
           <div className="duration-text">{course.duration || '1 hour'}</div>
         </div>
       </div>

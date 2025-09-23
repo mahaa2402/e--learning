@@ -83,10 +83,10 @@ const CourseDetailPage = () => {
               <div className="course-detail-logo-subtitle">InnovativeLearning</div>
             </div>
             <nav className="course-detail-nav">
-              <a href="#" className="course-detail-nav-link">Home</a>
+              <a href="/" className="course-detail-nav-link">Home</a>
               <a href="#" className="course-detail-nav-link active">Courses</a>
-              <a href="#" className="course-detail-nav-link">Certifications</a>
-              <a href="#" className="course-detail-nav-link">About</a>
+              
+           
             </nav>
             <div className="course-detail-header-actions">
             
