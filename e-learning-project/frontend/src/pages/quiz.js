@@ -470,6 +470,11 @@ const Quiz = () => {
           console.log('Updated level cleared to:', updatedLevel);
           
           // Trigger refresh event for taskmodulepage to update completion status
+          console.log('🎉 Dispatching quizCompleted event:', { 
+            moduleId: m_id, 
+            courseId: courseId,
+            courseName: courseName 
+          });
           window.dispatchEvent(new CustomEvent('quizCompleted', { 
             detail: { 
               moduleId: m_id, 
