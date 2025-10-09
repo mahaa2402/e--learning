@@ -1,6 +1,7 @@
 const UserProgress = require('../models/Userprogress');
 const { updateCourseProgress } = require('../commonUserProgressManager');
 const { updateAssignedCourseProgress } = require('../assignedCourseUserProgressManager');
+const { clearQuizTimestamp } = require('../commonUserProgressManager');
 
 // Save progress after a quiz is completed
 const saveQuizProgress = async (req, res) => {
@@ -53,6 +54,14 @@ const saveQuizProgress = async (req, res) => {
       await updateAssignedCourseProgress(userEmail, courseName);
     } catch (error) {
       console.log('⚠️ Could not update assigned course progress:', error.message);
+    }
+
+    // Clear quiz cooldown timestamp since user passed the quiz
+    try {
+      await clearQuizTimestamp(userEmail, courseName);
+      console.log('✅ Quiz cooldown cleared for user:', userEmail, 'course:', courseName);
+    } catch (error) {
+      console.log('⚠️ Could not clear quiz cooldown:', error.message);
     }
 
     res.status(200).json({ success: true, progress });

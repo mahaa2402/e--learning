@@ -511,6 +511,11 @@ const Quiz = () => {
           console.log('Updated level cleared to:', updatedLevel);
           
           // Trigger refresh event for taskmodulepage to update completion status
+          console.log('🎉 Dispatching quizCompleted event:', { 
+            moduleId: m_id, 
+            courseId: courseId,
+            courseName: courseName 
+          });
           window.dispatchEvent(new CustomEvent('quizCompleted', { 
             detail: { 
               moduleId: m_id, 
@@ -591,6 +596,7 @@ const Quiz = () => {
         console.error('Error saving quiz progress:', error);
       }
     } else {
+<<<<<<< HEAD
       // User failed the quiz - update timestamp to block retake for 24 hours
       console.log('User did not pass quiz, updating timestamp to block retake');
       try {
@@ -612,10 +618,37 @@ const Quiz = () => {
             console.log('✅ Quiz timestamp updated after failed attempt');
           } else {
             console.error('❌ Failed to update quiz timestamp');
+=======
+      // User failed the quiz - only set cooldown if this is the second attempt (retake)
+      if (attemptNumber === 2) {
+        console.log('User failed on second attempt (retake), updating timestamp to block further attempts for 24 hours');
+        try {
+          const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+          if (token) {
+            const courseName = getCourseName();
+            console.log('⏰ Quiz failed on retake, updating timestamp for course:', courseName);
+            
+            const response = await fetch('http://localhost:5000/api/courses/update-quiz-timestamp', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              },
+              body: JSON.stringify({ courseName })
+            });
+            
+            if (response.ok) {
+              console.log('✅ Quiz timestamp updated after failed retake attempt');
+            } else {
+              console.error('❌ Failed to update quiz timestamp');
+            }
+>>>>>>> 8434c58521da50337ff2e1217b517e97ed365d11
           }
+        } catch (error) {
+          console.error('❌ Error updating quiz timestamp:', error);
         }
-      } catch (error) {
-        console.error('❌ Error updating quiz timestamp:', error);
+      } else {
+        console.log('User failed on first attempt, allowing retake without cooldown');
       }
     }
   };

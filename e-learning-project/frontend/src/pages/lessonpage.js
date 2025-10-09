@@ -382,8 +382,17 @@ const [unlockStatus, setUnlockStatus] = useState([]); // default to empty array
   const actualLessonId = getLessonKeyFromId(lessonId);
   const lesson = lessons[actualLessonId];
 
+  // Debounce mechanism to prevent excessive API calls
+  const [fetchTimeout, setFetchTimeout] = useState(null);
+
   // Fetch user progress and unlock status
-  const fetchUserProgress = async () => {
+  const fetchUserProgress = async (force = false) => {
+    // If not forced and there's already a pending fetch, skip this one
+    if (!force && fetchTimeout) {
+      console.log('⏳ Fetch already in progress, skipping...');
+      return;
+    }
+
     try {
       setLoading(true);
       const token = localStorage.getItem('authToken') || localStorage.getItem('token');
@@ -403,7 +412,7 @@ const [unlockStatus, setUnlockStatus] = useState([]); // default to empty array
 
       if (response.ok) {
         const data = await response.json();
-        console.log('sarva', data);
+        console.log('📊 Progress data received:', data);
 
         if (Array.isArray(data.lessonUnlockStatus)) {
           setUnlockStatus(data.lessonUnlockStatus);
@@ -420,6 +429,11 @@ const [unlockStatus, setUnlockStatus] = useState([]); // default to empty array
       setUnlockStatus([]);
     } finally {
       setLoading(false);
+      // Clear the timeout after fetch completes
+      if (fetchTimeout) {
+        clearTimeout(fetchTimeout);
+        setFetchTimeout(null);
+      }
     }
   };
 
@@ -443,6 +457,17 @@ const [unlockStatus, setUnlockStatus] = useState([]); // default to empty array
     }
   }, [courseId, course]);
 
+  // Only refresh on lesson change for ISP course (removed excessive triggers)
+  useEffect(() => {
+    if (course?.name === 'ISP' && lessonId) {
+      console.log('🔄 Lesson changed for ISP course, refreshing unlock status...');
+      // Add a small delay to ensure the lesson change is processed
+      setTimeout(() => {
+        fetchUserProgress();
+      }, 100);
+    }
+  }, [lessonId, course?.name]);
+
   // Refresh unlock status when page becomes visible
   useEffect(() => {
     const handleVisibilityChange = () => {
@@ -458,6 +483,7 @@ const [unlockStatus, setUnlockStatus] = useState([]); // default to empty array
     };
   }, [course]);
 
+<<<<<<< HEAD
   // Listen for quiz completion and progress update events
   useEffect(() => {
     const handleQuizCompleted = (event) => {
@@ -471,11 +497,34 @@ const [unlockStatus, setUnlockStatus] = useState([]); // default to empty array
         console.log('🔄 Refreshing unlock status for current course in lesson page...');
         // Add a small delay to ensure backend has processed the completion
         setTimeout(() => {
+=======
+  // Listen for quiz completion events to refresh unlock status
+  useEffect(() => {
+    let refreshTimeout;
+    
+    const handleQuizCompleted = (event) => {
+      const { moduleId, courseId: eventCourseId, courseName } = event.detail;
+      console.log('🎉 Quiz completed event received:', { moduleId, courseId: eventCourseId, courseName });
+      
+      // Check if this completion is for the current course
+      const currentCourseName = course?.name;
+      if (eventCourseId === courseId || courseName === currentCourseName) {
+        console.log('🔄 Refreshing unlock status for current course...');
+        
+        // Clear any existing timeout to prevent multiple refreshes
+        if (refreshTimeout) {
+          clearTimeout(refreshTimeout);
+        }
+        
+        // Add a small delay to ensure backend has processed the completion
+        refreshTimeout = setTimeout(() => {
+>>>>>>> 8434c58521da50337ff2e1217b517e97ed365d11
           fetchUserProgress();
         }, 500);
       }
     };
 
+<<<<<<< HEAD
     const handleProgressUpdated = (event) => {
       const { courseName: eventCourseName, lessonUnlockStatus } = event.detail;
       console.log('🔄 Progress updated event received in lesson page:', { eventCourseName, lessonUnlockStatus });
@@ -497,6 +546,17 @@ const [unlockStatus, setUnlockStatus] = useState([]); // default to empty array
       window.removeEventListener('progressUpdated', handleProgressUpdated);
     };
   }, [courseId, course?.name, fetchUserProgress]);
+=======
+    window.addEventListener('quizCompleted', handleQuizCompleted);
+    
+    return () => {
+      window.removeEventListener('quizCompleted', handleQuizCompleted);
+      if (refreshTimeout) {
+        clearTimeout(refreshTimeout);
+      }
+    };
+  }, [courseId, course?.name]);
+>>>>>>> 8434c58521da50337ff2e1217b517e97ed365d11
 
   // Map lesson keys to backend IDs
   const getModuleIdFromLessonKey = (lessonKey) => {
@@ -781,11 +841,25 @@ const renderFormattedContent = (contentArray) => {
           <p className="subtitle">{lesson.title}</p>
         </div>
         <div className="top-bar-actions">
-                        <a href="/" className="course-detail-nav-link">Home</a>
-
-          {/* <button className="refresh-button" onClick={fetchUserProgress} disabled={loading} title="Refresh unlock status">
+          <a href="/" className="course-detail-nav-link">Home</a>
+          <button 
+            className="refresh-button" 
+            onClick={() => fetchUserProgress(true)} 
+            disabled={loading} 
+            title="Refresh unlock status"
+            style={{
+              backgroundColor: course?.name === 'ISP' ? '#ff6b35' : '#007bff',
+              color: 'white',
+              border: 'none',
+              padding: '8px 16px',
+              borderRadius: '4px',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              fontSize: '14px',
+              marginRight: '10px'
+            }}
+          >
             🔄 Refresh
-          </button> */}
+          </button>
           <div className="duration-text">{course.duration || '1 hour'}</div>
         </div>
       </div>

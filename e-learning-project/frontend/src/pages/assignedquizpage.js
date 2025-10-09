@@ -215,7 +215,7 @@ const AssignedQuizPage = () => {
         setUpdatingProgress(false);
       }
     } else {
-      // Quiz failed - update timestamp to block retake for 24 hours
+      // Quiz failed - update timestamp to block retake for 24 hours (single attempt quiz)
       try {
         const token = localStorage.getItem('token');
         if (token) {

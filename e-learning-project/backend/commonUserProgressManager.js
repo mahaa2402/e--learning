@@ -513,6 +513,33 @@ async function getQuizCooldownRemaining(employeeEmail, courseName) {
   }
 }
 
+/**
+ * Clear quiz timestamp when user passes a quiz
+ * This removes the cooldown restriction
+ */
+async function clearQuizTimestamp(employeeEmail, courseName) {
+  try {
+    console.log(`🧹 Clearing quiz timestamp for ${employeeEmail} - ${courseName}`);
+    
+    const result = await CommonUserProgress.findOneAndUpdate(
+      { employeeEmail: employeeEmail },
+      { $unset: { [`quizTimestamp.${courseName}`]: 1 } },
+      { new: true }
+    );
+    
+    if (result) {
+      console.log(`✅ Quiz timestamp cleared for ${employeeEmail} - ${courseName}`);
+    } else {
+      console.log(`⚠️ No progress record found for ${employeeEmail}`);
+    }
+    
+    return result;
+  } catch (error) {
+    console.error('❌ Error clearing quiz timestamp:', error);
+    throw error;
+  }
+}
+
 // ============================================================================
 // EXPORTS
 // ============================================================================
@@ -535,6 +562,7 @@ module.exports = {
   canTakeQuiz,
   updateQuizTimestamp,
   getQuizCooldownRemaining,
+  clearQuizTimestamp,
   
   // Migration utilities
   migrateExistingDocuments,
