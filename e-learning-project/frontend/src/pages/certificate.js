@@ -126,7 +126,7 @@ const CertificatePage = () => {
           return;
         }
 
-        // Fallback to the original certificate logic
+        // Fallback: Try to fetch certificates from database
         const token = localStorage.getItem('authToken') || localStorage.getItem('token');
         
         if (!token) {
@@ -135,11 +135,10 @@ const CertificatePage = () => {
           return;
         }
 
-        // Use course-specific title if available
-        const courseTitle = completedCourseName || "Information Security & Data Protection";
+        console.log('🔍 Attempting to fetch certificates from database...');
         
-        // Get certificate from the new controller
-        const response = await fetch(`http://localhost:5000/api/certificate/employee-certificates`, {
+        // Get certificates from the database
+        const response = await fetch(`/api/certificate/employee-certificates`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -148,6 +147,7 @@ const CertificatePage = () => {
         });
 
         const data = await response.json();
+        console.log('📊 Certificate API response:', data);
         
         if (!response.ok) {
           if (response.status === 403) {
@@ -156,16 +156,97 @@ const CertificatePage = () => {
             localStorage.removeItem('authToken');
             localStorage.removeItem('token');
           } else {
+            console.error('❌ Certificate API error:', data);
             setError(data.message || 'Failed to fetch certificate');
           }
         } else {
           if (data.success && data.certificates && data.certificates.length > 0) {
             // Use the most recent certificate
-            setCertificateData(data.certificates[0]);
+            const latestCertificate = data.certificates[0];
+            setCertificateData(latestCertificate);
             setSuccess(true);
-            console.log('Certificate fetched successfully:', data.certificates[0]);
+            console.log('✅ Certificate fetched successfully:', latestCertificate);
           } else {
-            setError('No certificates found');
+            console.log('⚠️ No certificates found in database');
+            
+            // If no certificates found, check if we have course completion data
+            if (completedCourseName) {
+              console.log('🔄 Attempting to generate certificate for completed course:', completedCourseName);
+              
+              // Get user email from token
+              let userEmail = '';
+              if (token) {
+                try {
+                  const payload = JSON.parse(atob(token.split('.')[1]));
+                  userEmail = payload.email;
+                } catch (e) {
+                  console.error('Error parsing token:', e);
+                }
+              }
+              
+              // Try to generate certificate from backend
+              try {
+                const generateResponse = await fetch('/api/certificate/check-course-completion', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                  },
+                  body: JSON.stringify({
+                    courseName: completedCourseName,
+                    userEmail: userEmail
+                  })
+                });
+                
+                const generateData = await generateResponse.json();
+                console.log('🎓 Certificate generation response:', generateData);
+                
+                if (generateResponse.ok && generateData.success && generateData.isCompleted && generateData.certificate) {
+                  // Certificate was generated successfully
+                  setCertificateData(generateData.certificate);
+                  setCourseCompleted(true);
+                  setSuccess(true);
+                  
+                  // Clear the temporary data
+                  localStorage.removeItem('courseCompleted');
+                  localStorage.removeItem('completedCourseName');
+                  
+                  console.log('✅ Certificate generated and displayed:', generateData.certificate);
+                  return;
+                } else {
+                  console.log('⚠️ Certificate generation failed:', generateData.message);
+                }
+              } catch (generateError) {
+                console.error('❌ Error generating certificate:', generateError);
+              }
+              
+              // Fallback: Create a temporary certificate for display
+              console.log('🔄 Creating temporary certificate for completed course:', completedCourseName);
+              
+              const tempCertificate = {
+                courseTitle: completedCourseName,
+                employeeName: employeeName,
+                employeeId: employeeId,
+                employeeEmail: userEmail,
+                date: new Date().toLocaleDateString(),
+                certificateId: `CERT-${Date.now()}`,
+                completionDate: new Date(),
+                completedModules: ['All Modules'],
+                totalModules: 1
+              };
+              
+              setCertificateData(tempCertificate);
+              setCourseCompleted(true);
+              setSuccess(true);
+              
+              // Clear the temporary data
+              localStorage.removeItem('courseCompleted');
+              localStorage.removeItem('completedCourseName');
+              
+              console.log('🎉 Displaying temporary certificate for completed course:', tempCertificate);
+            } else {
+              setError('No certificates found. Please complete a course first to generate a certificate.');
+            }
           }
         }
       } catch (error) {
@@ -194,9 +275,65 @@ const CertificatePage = () => {
     return (
       <div className="certificate-container">
         <div className="certificate">
-          <h2>Error</h2>
-          <p style={{ color: 'red' }}>{error}</p>
-          <button onClick={() => window.location.reload()}>Try Again</button>
+          <h2>Certificate Not Found</h2>
+          <div style={{ 
+            backgroundColor: '#f8d7da', 
+            color: '#721c24', 
+            padding: '15px', 
+            borderRadius: '8px', 
+            marginBottom: '20px',
+            border: '1px solid #f5c6cb'
+          }}>
+            <p style={{ margin: '0', fontSize: '16px' }}>{error}</p>
+          </div>
+          
+          <div style={{ 
+            backgroundColor: '#d1ecf1', 
+            color: '#0c5460', 
+            padding: '15px', 
+            borderRadius: '8px', 
+            marginBottom: '20px',
+            border: '1px solid #bee5eb'
+          }}>
+            <h3 style={{ marginTop: '0', color: '#0c5460' }}>💡 How to get a certificate:</h3>
+            <ol style={{ marginBottom: '0', paddingLeft: '20px' }}>
+              <li>Complete all modules in any course (ISP, GDPR, etc.)</li>
+              <li>Pass all quizzes with at least 50% score</li>
+              <li>Click the "View Certificate" button that appears</li>
+              <li>Your certificate will be automatically generated</li>
+            </ol>
+          </div>
+          
+          <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+            <button 
+              onClick={() => window.location.reload()}
+              style={{
+                backgroundColor: '#007bff',
+                color: 'white',
+                padding: '10px 20px',
+                border: 'none',
+                borderRadius: '5px',
+                cursor: 'pointer',
+                fontSize: '14px'
+              }}
+            >
+              🔄 Try Again
+            </button>
+            <button 
+              onClick={() => window.location.href = '/userdashboard'}
+              style={{
+                backgroundColor: '#28a745',
+                color: 'white',
+                padding: '10px 20px',
+                border: 'none',
+                borderRadius: '5px',
+                cursor: 'pointer',
+                fontSize: '14px'
+              }}
+            >
+              📚 Go to Courses
+            </button>
+          </div>
         </div>
       </div>
     );

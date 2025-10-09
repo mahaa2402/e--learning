@@ -168,9 +168,13 @@ router.get('/employees-for-assignment', async (req, res) => {
 // GET /api/employees - Get all employees (no password)
 router.get('/employees', async (req, res) => {
   try {
+    console.log('🔍 Fetching employees from database...');
     const employees = await Employee.find({}, '-password').sort({ name: 1 });
+    console.log(`📊 Found ${employees.length} employees in database`);
+    console.log('👥 Employee list:', employees.map(emp => ({ name: emp.name, email: emp.email, _id: emp._id })));
     res.json(employees);
   } catch (err) {
+    console.error('❌ Error fetching employees:', err);
     res.status(500).json({ error: 'Failed to fetch employees', message: err.message });
   }
 });
@@ -208,7 +212,68 @@ router.post('/update-progress', async (req, res) => {
 
 const { v4: uuidv4 } = require('uuid'); // for generating certificateId
 
+// DELETE /api/employees/:id - Delete an employee
+router.delete('/employees/:id', async (req, res) => {
+  try {
+    const employeeId = req.params.id;
+    console.log(`🗑️ Attempting to delete employee with ID: ${employeeId}`);
+    
+    const employee = await Employee.findById(employeeId);
+    if (!employee) {
+      console.log(`❌ Employee not found with ID: ${employeeId}`);
+      return res.status(404).json({ error: 'Employee not found' });
+    }
+    
+    console.log(`👤 Deleting employee: ${employee.name} (${employee.email})`);
+    
+    // Delete the employee
+    await Employee.findByIdAndDelete(employeeId);
+    
+    console.log(`✅ Successfully deleted employee: ${employee.name}`);
+    res.json({ 
+      success: true, 
+      message: `Employee ${employee.name} deleted successfully`,
+      deletedEmployee: {
+        id: employeeId,
+        name: employee.name,
+        email: employee.email
+      }
+    });
+  } catch (err) {
+    console.error('❌ Error deleting employee:', err);
+    res.status(500).json({ error: 'Failed to delete employee', message: err.message });
+  }
+});
 
+// DELETE /api/employees - Delete all employees (for testing)
+router.delete('/employees', async (req, res) => {
+  try {
+    console.log('🗑️ Attempting to delete ALL employees...');
+    
+    const result = await Employee.deleteMany({});
+    console.log(`✅ Deleted ${result.deletedCount} employees from database`);
+    
+    res.json({ 
+      success: true, 
+      message: `Deleted ${result.deletedCount} employees successfully`,
+      deletedCount: result.deletedCount
+    });
+  } catch (err) {
+    console.error('❌ Error deleting all employees:', err);
+    res.status(500).json({ error: 'Failed to delete employees', message: err.message });
+  }
+});
 
+// GET /api/employees/count - Get employee count for debugging
+router.get('/employees/count', async (req, res) => {
+  try {
+    const count = await Employee.countDocuments();
+    console.log(`📊 Total employees in database: ${count}`);
+    res.json({ count, message: `Total employees: ${count}` });
+  } catch (err) {
+    console.error('❌ Error counting employees:', err);
+    res.status(500).json({ error: 'Failed to count employees', message: err.message });
+  }
+});
 
 module.exports = router;

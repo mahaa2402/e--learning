@@ -51,7 +51,8 @@ const CourseAdminDashboard = () => {
   const categories = ['Security', 'HR & Compliance', 'Technical', 'Soft Skills', 'Leadership'];
   const questionTypes = ['multiple-choice', 'true-false', 'fill-in-blank'];
 
-  const API_BASE_URL = 'http://localhost:5000';
+  const API_BASE_URL = '/api';
+;
 
   // Add a function to fetch courses and expose it for reuse
   const fetchCourses = async () => {

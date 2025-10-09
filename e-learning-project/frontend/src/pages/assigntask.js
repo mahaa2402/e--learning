@@ -69,7 +69,7 @@ const TaskAssignment = () => {
           return;
         }
 
-        const response = await fetch('http://localhost:5000/api/admin/courses', {
+          const response = await fetch('/api/admin/courses', {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -128,7 +128,7 @@ const TaskAssignment = () => {
           return;
         }
 
-        const response = await fetch('http://localhost:5000/api/employee/employees', {
+          const response = await fetch('/api/employee/employees', {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -275,7 +275,7 @@ const TaskAssignment = () => {
       setError(null);
       setSuccess(null);
       console.log('Sending taskData:', JSON.stringify(taskData, null, 2));
-      const response = await fetch('http://localhost:5000/api/assigned-tasks', {
+  const response = await fetch('/api/assigned-tasks', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -324,7 +324,7 @@ const TaskAssignment = () => {
     }
     
     try {
-      const response = await fetch('http://localhost:5000/api/verify-token', {
+  const response = await fetch('/api/verify-token', {
         headers: {
           'Authorization': `Bearer ${token}`
         }

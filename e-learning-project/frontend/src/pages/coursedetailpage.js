@@ -23,7 +23,7 @@ const CourseDetailPage = () => {
   useEffect(() => {
     const fetchCourse = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/courses/getcoursedetailpage', {
+  const response = await fetch('/api/api/courses/getcoursedetailpage', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ title })

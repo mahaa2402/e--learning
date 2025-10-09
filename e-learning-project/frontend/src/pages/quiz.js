@@ -11,7 +11,7 @@ if (thisLesson === currentLevel + 1) {
   const updatedLevel = thisLesson;
   localStorage.setItem("levelCleared", updatedLevel);
 
-  fetch("http://localhost:5000/api/update-progress", {
+  fetch("/api/update-progress", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, levelCount: updatedLevel }),
@@ -148,6 +148,47 @@ const Quiz = () => {
   const [quizBlocked, setQuizBlocked] = useState(false);
   const [cooldownTime, setCooldownTime] = useState({ hours: 0, minutes: 0 });
 
+  // Function to refresh progress data after quiz completion
+  const refreshProgressData = async () => {
+    try {
+      const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+      const userEmail = email;
+      const courseName = getCourseName();
+      
+      console.log('🔄 Refreshing progress data for:', { userEmail, courseName });
+      
+      const response = await fetch(`/api/progress/get-with-unlocking?userEmail=${encodeURIComponent(userEmail)}&courseName=${encodeURIComponent(courseName)}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ Progress data refreshed:', data);
+        
+        // Dispatch event to notify other components about progress update
+        window.dispatchEvent(new CustomEvent('progressUpdated', { 
+          detail: { 
+            progress: data.progress,
+            lessonUnlockStatus: data.lessonUnlockStatus,
+            courseName: courseName
+          } 
+        }));
+        
+        return data;
+      } else {
+        console.warn('⚠️ Failed to refresh progress data:', response.status);
+        return null;
+      }
+    } catch (error) {
+      console.error('❌ Error refreshing progress data:', error);
+      return null;
+    }
+  };
+
   // Check quiz availability when component mounts
   useEffect(() => {
     const checkQuizAvailability = async () => {
@@ -170,7 +211,7 @@ const Quiz = () => {
         if (!accessResult.isCompleted && !accessResult.canTake && !isSequentialCourse) {
           console.log('🔍 Checking quiz availability for course:', courseName);
 
-          const response = await fetch('http://localhost:5000/api/courses/check-quiz-availability', {
+          const response = await fetch('/api/courses/check-quiz-availability', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -223,7 +264,7 @@ const Quiz = () => {
       const courseName = getCourseName();
       const moduleId = getModuleIdFromLessonKey(mo_id);
       
-      const response = await fetch(`http://localhost:5000/api/progress/get-with-unlocking?userEmail=${userEmail}&courseName=${courseName}&courseId=${courseId}`, {
+  const response = await fetch(`/api/progress/get-with-unlocking?userEmail=${userEmail}&courseName=${courseName}&courseId=${courseId}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -279,7 +320,7 @@ const Quiz = () => {
       console.log("Fetching questions...");
       console.log("Request details:", {
         method: "POST",
-        url: "http://localhost:5000/api/courses/questions",
+  url: "/api/courses/questions",
         courseId: courseId,
         moduleId: mo_id,
         attemptNumber: attempt
@@ -295,7 +336,7 @@ const Quiz = () => {
       
       console.log("Request body:", JSON.stringify(requestBody, null, 2));
       
-      const response = await fetch("http://localhost:5000/api/courses/questions", {
+  const response = await fetch("/api/courses/questions", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -444,7 +485,7 @@ const Quiz = () => {
         console.log('Progress data:', { userEmail, courseName, m_id, passed });
         
         // Submit quiz progress to backend
-        const response = await fetch("http://localhost:5000/api/progress/submit-quiz", {
+  const response = await fetch("/api/progress/submit-quiz", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -478,12 +519,20 @@ const Quiz = () => {
             } 
           }));
 
+          // Refresh progress data to unlock next quiz immediately
+          try {
+            console.log('🔄 Refreshing progress data to unlock next quiz...');
+            await refreshProgressData();
+          } catch (error) {
+            console.warn('⚠️ Could not refresh progress data:', error);
+          }
+
           // Check if course is completed - ALWAYS check, not just for final module
           const currentCourseName = getCourseName();
           
           try {
             console.log('Checking if course is completed after this module...');
-            const certificateResponse = await fetch("http://localhost:5000/api/certificate/check-course-completion", {
+            const certificateResponse = await fetch("/api/certificate/check-course-completion", {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
@@ -550,7 +599,7 @@ const Quiz = () => {
           const courseName = getCourseName();
           console.log('⏰ Quiz failed, updating timestamp for course:', courseName);
           
-          const response = await fetch('http://localhost:5000/api/courses/update-quiz-timestamp', {
+          const response = await fetch('/api/courses/update-quiz-timestamp', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

@@ -49,7 +49,7 @@
 //         return;
 //       }
 
-//       const response = await fetch(`http://localhost:5000/api/progress/get-with-unlocking?userEmail=${userEmail}&courseName=${course.name}&courseId=${courseId}`, {
+//       const response = await fetch(`/api/progress/get-with-unlocking?userEmail=${userEmail}&courseName=${course.name}&courseId=${courseId}`, {
 //         headers: {
 //           'Authorization': `Bearer ${token}`
 //         }
@@ -397,7 +397,7 @@ const [unlockStatus, setUnlockStatus] = useState([]); // default to empty array
       }
 
       const response = await fetch(
-        `http://localhost:5000/api/progress/get-with-unlocking?userEmail=${userEmail}&courseName=${course.name}&courseId=${courseId}`,
+  `/api/progress/get-with-unlocking?userEmail=${userEmail}&courseName=${course.name}&courseId=${courseId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -458,6 +458,46 @@ const [unlockStatus, setUnlockStatus] = useState([]); // default to empty array
     };
   }, [course]);
 
+  // Listen for quiz completion and progress update events
+  useEffect(() => {
+    const handleQuizCompleted = (event) => {
+      const { moduleId, courseId: eventCourseId, courseName } = event.detail;
+      console.log('🎉 Quiz completed event received in lesson page:', { moduleId, eventCourseId, courseName });
+      
+      // Check if this completion is for the current course
+      const currentCourseName = course?.name;
+      
+      if (eventCourseId === courseId || courseName === currentCourseName) {
+        console.log('🔄 Refreshing unlock status for current course in lesson page...');
+        // Add a small delay to ensure backend has processed the completion
+        setTimeout(() => {
+          fetchUserProgress();
+        }, 500);
+      }
+    };
+
+    const handleProgressUpdated = (event) => {
+      const { courseName: eventCourseName, lessonUnlockStatus } = event.detail;
+      console.log('🔄 Progress updated event received in lesson page:', { eventCourseName, lessonUnlockStatus });
+      
+      // Check if this update is for the current course
+      const currentCourseName = course?.name;
+      
+      if (eventCourseName === currentCourseName) {
+        console.log('✅ Updating unlock status from progress update event in lesson page...');
+        setUnlockStatus(lessonUnlockStatus);
+      }
+    };
+
+    window.addEventListener('quizCompleted', handleQuizCompleted);
+    window.addEventListener('progressUpdated', handleProgressUpdated);
+    
+    return () => {
+      window.removeEventListener('quizCompleted', handleQuizCompleted);
+      window.removeEventListener('progressUpdated', handleProgressUpdated);
+    };
+  }, [courseId, course?.name, fetchUserProgress]);
+
   // Map lesson keys to backend IDs
   const getModuleIdFromLessonKey = (lessonKey) => {
     const moduleMapping = {
@@ -504,6 +544,136 @@ const [unlockStatus, setUnlockStatus] = useState([]); // default to empty array
   };
 
   const isQuizCompleted = (lessonKey) => isLessonCompleted(lessonKey);
+
+  // Check if all modules in the course are completed
+  const isCourseCompleted = () => {
+    if (!Array.isArray(unlockStatus) || unlockStatus.length === 0) {
+      return false;
+    }
+    
+    // Check if all lessons are completed
+    return lessonKeys.every(lessonKey => {
+      const moduleId = getModuleIdFromLessonKey(lessonKey);
+      const lessonStatus = unlockStatus.find(status => status.lessonId === moduleId);
+      return lessonStatus ? lessonStatus.isCompleted : false;
+    });
+  };
+
+  // Auto-generate certificate when course is completed
+  useEffect(() => {
+    const autoGenerateCertificate = async () => {
+      if (isCourseCompleted() && course?.name) {
+        console.log('🎓 Course completed! Auto-generating certificate...');
+        
+        try {
+          const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+          if (!token) return;
+          
+          let userEmail = '';
+          try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            userEmail = payload.email;
+          } catch (e) {
+            console.error('Error parsing token:', e);
+            return;
+          }
+          
+          const generateResponse = await fetch('/api/certificate/check-course-completion', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              courseName: course.name,
+              userEmail: userEmail
+            })
+          });
+          
+          const generateData = await generateResponse.json();
+          console.log('🎓 Auto-certificate generation response:', generateData);
+          
+          if (generateResponse.ok && generateData.success && generateData.isCompleted && generateData.certificate) {
+            console.log('✅ Certificate auto-generated successfully:', generateData.certificate);
+            // Store the generated certificate for later use
+            localStorage.setItem('lastGeneratedCertificate', JSON.stringify(generateData.certificate));
+          }
+        } catch (error) {
+          console.error('❌ Error auto-generating certificate:', error);
+        }
+      }
+    };
+    
+    // Only run if we have unlock status and course data
+    if (unlockStatus.length > 0 && course?.name) {
+      autoGenerateCertificate();
+    }
+  }, [unlockStatus, course?.name]);
+
+  // Handle certificate button click
+  const handleViewCertificate = async () => {
+    try {
+      // Get user email from token for certificate generation
+      const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+      let userEmail = '';
+      if (token) {
+        try {
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          userEmail = payload.email;
+        } catch (e) {
+          console.error('Error parsing token:', e);
+        }
+      }
+
+      console.log('🎓 Attempting to generate certificate for completed course:', course?.name);
+      
+      // Try to generate certificate from backend first
+      try {
+        const generateResponse = await fetch('/api/certificate/check-course-completion', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            courseName: course?.name,
+            userEmail: userEmail
+          })
+        });
+        
+        const generateData = await generateResponse.json();
+        console.log('🎓 Certificate generation response:', generateData);
+        
+        if (generateResponse.ok && generateData.success && generateData.isCompleted && generateData.certificate) {
+          // Certificate was generated successfully
+          localStorage.setItem('lastGeneratedCertificate', JSON.stringify(generateData.certificate));
+          localStorage.setItem('courseCompleted', 'true');
+          localStorage.setItem('completedCourseName', course?.name);
+          
+          console.log('✅ Certificate generated successfully:', generateData.certificate);
+        } else {
+          console.log('⚠️ Certificate generation failed:', generateData.message);
+          // Still proceed with course completion data
+          localStorage.setItem('courseCompleted', 'true');
+          localStorage.setItem('completedCourseName', course?.name);
+        }
+      } catch (generateError) {
+        console.error('❌ Error generating certificate:', generateError);
+        // Still proceed with course completion data
+        localStorage.setItem('courseCompleted', 'true');
+        localStorage.setItem('completedCourseName', course?.name);
+      }
+      
+      // Navigate to certificate page
+      navigate('/certificate');
+    } catch (error) {
+      console.error('❌ Error in handleViewCertificate:', error);
+      // Fallback: just navigate to certificate page
+      localStorage.setItem('courseCompleted', 'true');
+      localStorage.setItem('completedCourseName', course?.name);
+      navigate('/certificate');
+    }
+  };
 
   if (!course) {
     return (
@@ -683,7 +853,7 @@ const renderFormattedContent = (contentArray) => {
                         const courseName = course.name;
                         console.log('🔍 Checking quiz availability before navigation for course:', courseName);
                         
-                        const response = await fetch('http://localhost:5000/api/courses/check-quiz-availability', {
+                        const response = await fetch('/api/courses/check-quiz-availability', {
                           method: 'POST',
                           headers: {
                             'Content-Type': 'application/json',
@@ -721,6 +891,47 @@ const renderFormattedContent = (contentArray) => {
               );
             })}
           </div>
+
+          {/* Certificate Section - Show when course is completed */}
+          {isCourseCompleted() && (
+            <div className="sidebar-section certificate-section">
+              <h4>🎓 Course Completed!</h4>
+              <div className="completion-message" style={{
+                fontSize: '14px',
+                color: '#28a745',
+                marginBottom: '12px',
+                textAlign: 'center',
+                fontWeight: 'bold'
+              }}>
+                Congratulations! You have completed all modules in the {course?.name} course.
+              </div>
+              <button
+                onClick={handleViewCertificate}
+                className="certificate-button"
+                style={{
+                  backgroundColor: '#28a745',
+                  color: 'white',
+                  padding: '12px 24px',
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  marginTop: '8px',
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  transition: 'background-color 0.3s ease'
+                }}
+                onMouseOver={(e) => e.target.style.backgroundColor = '#218838'}
+                onMouseOut={(e) => e.target.style.backgroundColor = '#28a745'}
+              >
+                🏆 View Certificate
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

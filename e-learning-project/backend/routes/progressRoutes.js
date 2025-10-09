@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { saveQuizProgress, getUserProgress, getUserProgressWithUnlocking } = require('../controllers/progressController');
+const { saveQuizProgress, getUserProgress, getUserProgressWithUnlocking } = require('../controllers/ProgressController');
 const {authenticateToken} = require('../middleware/auth');
 
 // Debug logs

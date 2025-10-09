@@ -24,7 +24,12 @@ const Login = () => {
     setIsLoading(true);
     
     try {
-      const res = await axios.post('http://localhost:5000/api/auth/login', formData);
+      const res = await axios.post('/api/api/auth/login', formData, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        withCredentials: true
+      });
       
       const token = res.data.token;
       const userData = res.data.user;
@@ -43,11 +48,12 @@ const Login = () => {
 
         // Fetch level progress for all users
         try {
-          const progressRes = await fetch(`http://localhost:5000/api/progress/${userData.email}`, {
+          const progressRes = await fetch(`/api/api/progress/${userData.email}`, {
             headers: {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'
-            }
+            },
+            mode: 'cors'
           });
           
           if (progressRes.ok) {

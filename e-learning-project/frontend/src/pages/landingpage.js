@@ -20,11 +20,13 @@ function LandingPage() {
     setLoading(true);
     setError(null);
 
-    fetch('http://localhost:5000/api/courses/getcourse', {
+  fetch('/api/api/courses/getcourse', {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${token}`
-      }
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      mode: 'cors'
     })
       .then(response => {
         if (!response.ok) throw new Error('Failed to fetch courses');
@@ -124,6 +126,12 @@ function LandingPage() {
     document.body.style.overflow = 'auto';
   };
 
+  // Handle scroll to top when Home button is clicked
+  const handleHomeClick = (e) => {
+    e.preventDefault();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
     <div className="landing-page">
       {/* Navbar */}
@@ -133,10 +141,16 @@ function LandingPage() {
           <span className="vista-pink"> Innovation@work</span>
         </div>
         <nav>
-          <Link to="/">Home</Link>
-          {isLoggedIn &&   <a href="#courses">Courses</a>}
+          <a href="#" onClick={handleHomeClick}>Home</a>
+          {isLoggedIn && <a href="#courses" onClick={(e) => {
+            e.preventDefault();
+            document.getElementById('courses')?.scrollIntoView({ behavior: 'smooth' });
+          }}>Courses</a>}
           {isLoggedIn && <Link to="/userdashboard">Dashboard</Link>}
-          <a href="#aboutus">About</a>
+          <a href="#aboutus" onClick={(e) => {
+            e.preventDefault();
+            document.getElementById('aboutus')?.scrollIntoView({ behavior: 'smooth' });
+          }}>About</a>
         </nav>
         <div className="nav-buttons">
           {isLoggedIn && (
@@ -178,13 +192,16 @@ function LandingPage() {
           <div className="hero-buttons">
             {isLoggedIn ? (
               <>
-                <Link to="/user/courses" className="btn explore-btn">Explore Courses</Link>
-                <Link to="/user/certificates" className="btn get-cert-btn">Get Certified</Link>
+                <a href="#courses" className="btn explore-btn" onClick={(e) => {
+                  e.preventDefault();
+                  document.getElementById('courses')?.scrollIntoView({ behavior: 'smooth' });
+                }}>Explore Courses</a>
+              
               </>
             ) : (
               <>
                 <Link to="/login" className="btn explore-btn">Login to Explore Courses</Link>
-                <Link to="/register" className="btn get-cert-btn">Sign Up to Get Certified</Link>
+               
               </>
             )}
           </div>
@@ -374,7 +391,7 @@ function LandingPage() {
               <div className="footer-section">
                 <h4 className="footer-title">Quick Links</h4>
                 <ul className="footer-links">
-                  <li><Link to="/">Home</Link></li>
+                  <li><a href="#" onClick={handleHomeClick}>Home</a></li>
                   {isLoggedIn && <li><Link to="/coursemodules">Courses</Link></li>}
                   {isLoggedIn && <li><Link to="/customize">Customize Course</Link></li>}
                   {isLoggedIn && <li><Link to="/user/certificates">Certificates</Link></li>}

@@ -67,7 +67,7 @@ const fetchAdminProfile = async () => {
       throw new Error('Authentication token not found. Please login again.');
     }
 
-    const response = await fetch('http://localhost:5000/api/profile', {
+  const response = await fetch('/api/api/profile', {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
@@ -183,7 +183,7 @@ const fetchAdminProfile = async () => {
         throw new Error('Authentication token not found. Please login again.');
       }
 
-      const response = await fetch('http://localhost:5000/api/certificates/employee-certificates', {
+  const response = await fetch('/api/api/certificates/employee-certificates', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -236,7 +236,7 @@ const fetchAdminProfile = async () => {
         throw new Error('Authentication token not found. Please login again.');
       }
 
-      const response = await fetch('http://localhost:5000/api/assigned-tasks', {
+  const response = await fetch('/api/api/assigned-tasks', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

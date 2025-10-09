@@ -31,7 +31,7 @@ function Register() {
     setIsLoading(true);
 
     try {
-      const res = await axios.post('http://localhost:5000/api/auth/register', formData); // Updated endpoint
+  const res = await axios.post('/api/api/auth/register', formData); // Updated endpoint
       setSuccess(res.data.message || 'Registration successful');
       setTimeout(() => navigate('/login'), 2000);
     } catch (err) {

@@ -25,7 +25,7 @@ const CourseDetail = () => {
       const courseName = 'ISP'; // Fixed to match common course name in database
       if (!token || !userEmail) return;
       try {
-        const res = await fetch(`http://localhost:5000/api/progress/get?userEmail=${encodeURIComponent(userEmail)}&courseName=${encodeURIComponent(courseName)}`, {
+  const res = await fetch(`/api/progress/get?userEmail=${encodeURIComponent(userEmail)}&courseName=${encodeURIComponent(courseName)}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (!res.ok) throw new Error('Failed to fetch progress');

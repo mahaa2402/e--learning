@@ -35,7 +35,7 @@ const AssignedQuizPage = () => {
           const courseName = courseDetails?.name || courseDetails?.title;
           console.log('🔍 Checking quiz availability for course:', courseName);
 
-          const response = await fetch('http://localhost:5000/api/courses/check-quiz-availability', {
+          const response = await fetch('/api/courses/check-quiz-availability', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -122,7 +122,7 @@ const AssignedQuizPage = () => {
         });
 
         // First check if the course is assigned to this employee
-        const checkResponse = await fetch(`http://localhost:5000/api/assigned-course-progress/check-assignment/${encodeURIComponent(courseName)}`, {
+  const checkResponse = await fetch(`/api/assigned-course-progress/check-assignment/${encodeURIComponent(courseName)}`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`
@@ -140,7 +140,7 @@ const AssignedQuizPage = () => {
         }
 
         // Update the progress
-        const response = await fetch('http://localhost:5000/api/assigned-course-progress/update-progress', {
+  const response = await fetch('/api/assigned-course-progress/update-progress', {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
@@ -161,7 +161,7 @@ const AssignedQuizPage = () => {
             const userEmail = localStorage.getItem('userEmail') || localStorage.getItem('employeeEmail') || undefined;
             const courseName2 = courseDetails?.name || courseDetails?.title;
             if (token2 && userEmail && courseName2 && selectedModule?.title) {
-              const submitRes = await fetch('http://localhost:5000/api/progress/submit-quiz', {
+              const submitRes = await fetch('/api/progress/submit-quiz', {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
@@ -222,7 +222,7 @@ const AssignedQuizPage = () => {
           const courseName = courseDetails?.name || courseDetails?.title;
           console.log('⏰ Quiz failed, updating timestamp for course:', courseName);
           
-          const response = await fetch('http://localhost:5000/api/courses/update-quiz-timestamp', {
+          const response = await fetch('/api/courses/update-quiz-timestamp', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

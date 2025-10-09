@@ -45,6 +45,11 @@ const EmployeeCard = ({ employee, onViewDetails }) => {
         <span className="employee-footer-value">
           {employee._id?.slice(-8) || employee.id?.slice(-8) || 'N/A'}
         </span>
+        {employee.hasCertificates && (
+          <div style={{ marginTop: '8px', padding: '4px 8px', backgroundColor: '#e8f5e8', borderRadius: '4px', fontSize: '12px' }}>
+            🏆 {employee.certificateCount} Certificate{employee.certificateCount > 1 ? 's' : ''}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -86,7 +91,9 @@ const EmployeeDirectory = () => {
         throw new Error('No authentication token found. Please log in.');
       }
 
-      const response = await fetch('http://localhost:5000/api/employee/employees', {
+      // First, get all certificates to see which employees have certificates
+      console.log('🔍 Fetching certificates to find employees with certificates...');
+      const certificatesResponse = await fetch('/api/certificates/all', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -95,14 +102,61 @@ const EmployeeDirectory = () => {
         credentials: 'include',
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || `HTTP error! Status: ${response.status}`);
+      let employeesWithCertificates = [];
+      if (certificatesResponse.ok) {
+        const certificatesData = await certificatesResponse.json();
+        console.log('📊 Certificates data:', certificatesData);
+        
+        // Extract unique employee information from certificates
+        const uniqueEmployees = {};
+        if (certificatesData.certificates && Array.isArray(certificatesData.certificates)) {
+          certificatesData.certificates.forEach(cert => {
+            const key = cert.employeeEmail || cert.employeeId;
+            if (key && !uniqueEmployees[key]) {
+              uniqueEmployees[key] = {
+                _id: cert.employeeId || cert.employeeEmail,
+                name: cert.employeeName || cert.employeeEmail.split('@')[0],
+                email: cert.employeeEmail,
+                department: 'Unknown', // Certificates don't have department info
+                createdAt: cert.createdAt || cert.completionDate,
+                hasCertificates: true,
+                certificateCount: 1
+              };
+            } else if (uniqueEmployees[key]) {
+              uniqueEmployees[key].certificateCount++;
+            }
+          });
+        }
+        employeesWithCertificates = Object.values(uniqueEmployees);
+        console.log('👥 Employees with certificates:', employeesWithCertificates);
       }
 
-      const data = await response.json();
-      setEmployees(Array.isArray(data) ? data : []);
+      // Also fetch regular employees for comparison
+      const response = await fetch('/api/employee/employees', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${authToken}`,
+        },
+        credentials: 'include',
+      });
+
+      let regularEmployees = [];
+      if (response.ok) {
+        const data = await response.json();
+        regularEmployees = Array.isArray(data) ? data : [];
+        console.log('👤 Regular employees:', regularEmployees);
+      }
+
+      // Combine both lists, prioritizing employees with certificates
+      const allEmployees = [...employeesWithCertificates, ...regularEmployees.filter(emp => 
+        !employeesWithCertificates.some(certEmp => certEmp.email === emp.email)
+      )];
+
+      setEmployees(allEmployees);
+      console.log('📋 Final employee list:', allEmployees);
     } catch (err) {
+      console.error('Error fetching employees:', err);
       setError(`Failed to fetch employees: ${err.message}`);
       setEmployees([]);
     } finally {

@@ -10,6 +10,8 @@ const CertificateDetails = () => {
   const [loading, setLoading] = useState(true);
   const [progressList, setProgressList] = useState([]); // List of user progress objects
   const [progressLoading, setProgressLoading] = useState(false);
+  const [debugInfo, setDebugInfo] = useState(null);
+  const [employeeSearch, setEmployeeSearch] = useState(null);
 
   const getAuthToken = () => {
     return (
@@ -27,39 +29,6 @@ const CertificateDetails = () => {
     );
   };
 
-  // Fetch available API endpoints first to understand what's available
-  const discoverApiEndpoints = async () => {
-    const token = getAuthToken();
-    const commonPaths = [
-      '/api/progress',
-      '/api/user-progress', 
-      '/api/users',
-      '/api/courses',
-      '/api/modules',
-      '/api/learning'
-    ];
-    
-    console.log('🔍 Discovering available API endpoints...');
-    const availableEndpoints = [];
-    
-    for (const path of commonPaths) {
-      try {
-        const res = await fetch(`http://localhost:5000${path}`, {
-          method: 'OPTIONS',
-          headers: token ? { 'Authorization': `Bearer ${token}` } : {}
-        });
-        if (res.ok || res.status === 405) { // 405 = Method Not Allowed but endpoint exists
-          availableEndpoints.push(path);
-          console.log(`✅ Found endpoint: ${path}`);
-        }
-      } catch (err) {
-        // Endpoint doesn't exist, skip
-      }
-    }
-    
-    console.log('Available endpoints:', availableEndpoints);
-    return availableEndpoints;
-  };
 
   // Fetch user progress for a given email and course
   const fetchUserProgress = async (employeeEmail, courseName) => {
@@ -74,7 +43,7 @@ const CertificateDetails = () => {
         console.warn('No auth token found for progress fetch');
         return [];
       }
-      const url = `http://localhost:5000/api/progress/get?userEmail=${encodeURIComponent(employeeEmail)}&courseName=${encodeURIComponent(courseName)}`;
+      const url = `/api/progress/get?userEmail=${encodeURIComponent(employeeEmail)}&courseName=${encodeURIComponent(courseName)}`;
       const res = await fetch(url, {
         method: 'GET',
         headers: {
@@ -143,7 +112,7 @@ const CertificateDetails = () => {
       console.log(`🔍 Fetching certificates for employee ID: ${id}`);
 
       // First, try to get all certificates to see what's available
-      const allCertificatesEndpoint = `http://localhost:5000/api/certificates/all`;
+      const allCertificatesEndpoint = `/api/certificates/all`;
       console.log(`🔍 Checking all certificates from: ${allCertificatesEndpoint}`);
       
       const allRes = await fetch(allCertificatesEndpoint, {
@@ -169,7 +138,7 @@ const CertificateDetails = () => {
       }
 
       // Use the correct endpoint for fetching all certificates for an employee
-      const endpoint = `http://localhost:5000/api/certificates/${id}`;
+      const endpoint = `/api/certificates/${id}`;
       console.log(`Fetching certificates from: ${endpoint}`);
       
       const res = await fetch(endpoint, {
@@ -182,7 +151,17 @@ const CertificateDetails = () => {
 
       if (!res.ok) {
         if (res.status === 404) {
-          throw new Error(`No certificates found for employee ID: ${id}. Please check if this employee has completed any courses.`);
+          // Try to get debug information from the response
+          let errorMessage = `No certificates found for employee ID: ${id}. Please check if this employee has completed any courses.`;
+          try {
+            const errorData = await res.json();
+            if (errorData.debug) {
+              errorMessage += `\n\nDebug Information:\n- Total certificates in database: ${errorData.debug.totalCertificatesInDB}\n- Sample employee IDs: ${errorData.debug.sampleCertificateIds?.join(', ') || 'None'}`;
+            }
+          } catch (e) {
+            // If we can't parse the error response, use the default message
+          }
+          throw new Error(errorMessage);
         } else if (res.status === 401) {
           throw new Error('Authentication failed. Please log in again.');
         } else {
@@ -215,6 +194,110 @@ const CertificateDetails = () => {
     }
   };
 
+  // Debug function to get employee information
+  const fetchDebugInfo = async () => {
+    try {
+      const authToken = getAuthToken();
+      if (!authToken) {
+        throw new Error('No authentication token found');
+      }
+
+      // Use the existing /all endpoint to get all certificates for debugging
+      const debugEndpoint = `/api/certificates/all`;
+      console.log(`🔍 Fetching debug info from: ${debugEndpoint}`);
+      
+      const res = await fetch(debugEndpoint, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
+        },
+        credentials: 'include'
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        
+        // Filter certificates that might match this employee ID
+        const matchingCertificates = data.certificates.filter(cert => 
+          cert.employeeId === id || 
+          cert.employeeEmail === id ||
+          cert.employeeId.includes(id) ||
+          cert.employeeEmail.includes(id)
+        );
+
+        // Also try to find employee by checking if any certificate has similar employee info
+        const allEmployeeIds = [...new Set(data.certificates.map(cert => cert.employeeId))];
+        const allEmployeeEmails = [...new Set(data.certificates.map(cert => cert.employeeEmail))];
+        
+        setDebugInfo({
+          totalCertificates: data.count,
+          matchingCertificates: matchingCertificates,
+          allEmployeeIds: allEmployeeIds.slice(0, 10), // Show first 10 for reference
+          allEmployeeEmails: allEmployeeEmails.slice(0, 10), // Show first 10 for reference
+          searchedId: id
+        });
+        console.log('Debug info received:', data);
+      } else {
+        const errorData = await res.json();
+        console.error('Debug info error:', errorData);
+        setDebugInfo({ error: errorData.message || 'Failed to fetch debug info' });
+      }
+    } catch (err) {
+      console.error('Error fetching debug info:', err);
+      setDebugInfo({ error: err.message });
+    }
+  };
+
+  // Function to search for employees
+  const searchEmployee = async () => {
+    try {
+      const authToken = getAuthToken();
+      if (!authToken) {
+        throw new Error('No authentication token found');
+      }
+
+      // Try to get employee information using the correct employee endpoint
+      const employeeEndpoint = `/api/employee/employees`;
+      console.log(`🔍 Searching for employee at: ${employeeEndpoint}`);
+      
+      const res = await fetch(employeeEndpoint, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
+        },
+        credentials: 'include'
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        console.log('Employee search result:', data);
+        
+        // Look for employees that might match our ID
+        const employees = Array.isArray(data) ? data : (data.employees || []);
+        const matchingEmployees = employees.filter(emp => 
+          emp._id === id || 
+          emp._id.includes(id) ||
+          emp.email === id ||
+          (emp.name && emp.name.toLowerCase().includes(id.toLowerCase()))
+        );
+        
+        setEmployeeSearch({
+          totalEmployees: employees.length,
+          matchingEmployees: matchingEmployees,
+          allEmployees: employees.slice(0, 10), // Show first 10 for reference
+          searchedId: id
+        });
+      } else {
+        const errorData = await res.json();
+        console.error('Employee search error:', errorData);
+        setEmployeeSearch({ error: errorData.message || 'Failed to search employees' });
+      }
+    } catch (err) {
+      console.error('Error searching employees:', err);
+      setEmployeeSearch({ error: err.message });
+    }
+  };
+
   useEffect(() => {
     fetchCertificateDetails();
     // eslint-disable-next-line
@@ -236,7 +319,174 @@ const CertificateDetails = () => {
       <div className="certificate-page">
         <div className="error-container">
           <p className="error-msg">❌ {error}</p>
-          <button className="back-button" onClick={() => navigate(-1)}>⬅ Go Back</button>
+          
+          <div style={{ marginTop: '20px' }}>
+            <button 
+              className="back-button" 
+              onClick={fetchDebugInfo}
+              style={{ marginRight: '10px', backgroundColor: '#007bff', color: 'white' }}
+            >
+              🔍 Get Debug Info
+            </button>
+            <button 
+              className="back-button" 
+              onClick={searchEmployee}
+              style={{ marginRight: '10px', backgroundColor: '#28a745', color: 'white' }}
+            >
+              👤 Search Employee
+            </button>
+            <button 
+              className="back-button" 
+              onClick={() => navigate('/employeetracking')}
+              style={{ marginRight: '10px', backgroundColor: '#6f42c1', color: 'white' }}
+            >
+              📋 Employee Tracking
+            </button>
+            <button className="back-button" onClick={() => navigate(-1)}>⬅ Go Back</button>
+          </div>
+
+          {debugInfo && (
+            <div className="debug-info" style={{ 
+              marginTop: '20px', 
+              padding: '15px', 
+              backgroundColor: '#f8f9fa', 
+              borderRadius: '8px', 
+              fontSize: '14px',
+              border: '1px solid #dee2e6'
+            }}>
+              <h4>🔧 Debug Information:</h4>
+              {debugInfo.error ? (
+                <p style={{ color: 'red' }}>❌ {debugInfo.error}</p>
+              ) : (
+                <div>
+                  <p><strong>🔍 Debug Results for ID: {debugInfo.searchedId}</strong></p>
+                  
+                  <p><strong>📊 Database Overview:</strong></p>
+                  <ul style={{ marginLeft: '20px' }}>
+                    <li><strong>Total certificates in database:</strong> {debugInfo.totalCertificates}</li>
+                    <li><strong>Matching certificates found:</strong> {debugInfo.matchingCertificates?.length || 0}</li>
+                  </ul>
+                  
+                  {debugInfo.matchingCertificates && debugInfo.matchingCertificates.length > 0 ? (
+                    <div>
+                      <p><strong>🎯 Matching Certificates:</strong></p>
+                      <ul style={{ marginLeft: '20px' }}>
+                        {debugInfo.matchingCertificates.map((cert, idx) => (
+                          <li key={idx}>
+                            <strong>{cert.courseTitle}</strong> - {cert.certificateId}
+                            <br />
+                            <small>Employee ID: {cert.employeeId} | Email: {cert.employeeEmail}</small>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : (
+                    <p style={{ color: 'orange' }}>⚠️ No certificates found matching this employee ID</p>
+                  )}
+                  
+                  <p><strong>📋 Sample Employee IDs in Database:</strong></p>
+                  <ul style={{ marginLeft: '20px', fontSize: '12px' }}>
+                    {debugInfo.allEmployeeIds?.map((empId, idx) => (
+                      <li key={idx}>{empId}</li>
+                    ))}
+                  </ul>
+                  
+                  <p><strong>📧 Sample Employee Emails in Database:</strong></p>
+                  <ul style={{ marginLeft: '20px', fontSize: '12px' }}>
+                    {debugInfo.allEmployeeEmails?.map((email, idx) => (
+                      <li key={idx}>{email}</li>
+                    ))}
+                  </ul>
+                  
+                  <div style={{ marginTop: '15px', padding: '10px', backgroundColor: '#e9ecef', borderRadius: '5px' }}>
+                    <p><strong>💡 Troubleshooting Tips:</strong></p>
+                    <ul style={{ marginLeft: '20px', fontSize: '12px' }}>
+                      <li>Check if the employee ID matches any of the sample IDs above</li>
+                      <li>Verify the employee has completed courses and certificates were generated</li>
+                      <li>Try using the employee's email address instead of the ID</li>
+                      <li>Check if the employee exists in the employee database</li>
+                    </ul>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {employeeSearch && (
+            <div className="debug-info" style={{ 
+              marginTop: '20px', 
+              padding: '15px', 
+              backgroundColor: '#f0f8ff', 
+              borderRadius: '8px', 
+              fontSize: '14px',
+              border: '1px solid #b3d9ff'
+            }}>
+              <h4>👤 Employee Search Results:</h4>
+              {employeeSearch.error ? (
+                <p style={{ color: 'red' }}>❌ {employeeSearch.error}</p>
+              ) : (
+                <div>
+                  <p><strong>🔍 Search Results for ID: {employeeSearch.searchedId}</strong></p>
+                  
+                  <p><strong>📊 Employee Database Overview:</strong></p>
+                  <ul style={{ marginLeft: '20px' }}>
+                    <li><strong>Total employees in database:</strong> {employeeSearch.totalEmployees}</li>
+                    <li><strong>Matching employees found:</strong> {employeeSearch.matchingEmployees?.length || 0}</li>
+                  </ul>
+                  
+                  {employeeSearch.matchingEmployees && employeeSearch.matchingEmployees.length > 0 ? (
+                    <div>
+                      <p><strong>🎯 Matching Employees:</strong></p>
+                      <ul style={{ marginLeft: '20px' }}>
+                        {employeeSearch.matchingEmployees.map((emp, idx) => (
+                          <li key={idx}>
+                            <strong>{emp.name}</strong> - {emp.email}
+                            <br />
+                            <small>Employee ID: {emp._id} | Department: {emp.department}</small>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : (
+                    <p style={{ color: 'orange' }}>⚠️ No employees found matching this ID</p>
+                  )}
+                  
+                  <p><strong>📋 Sample Employee IDs in Database:</strong></p>
+                  <ul style={{ marginLeft: '20px', fontSize: '12px' }}>
+                    {employeeSearch.allEmployees?.map((emp, idx) => (
+                      <li key={idx}>
+                        <strong>{emp.name}</strong> - {emp._id}
+                        <br />
+                        <small>Email: {emp.email}</small>
+                      </li>
+                    ))}
+                  </ul>
+                  
+                  <div style={{ marginTop: '15px', padding: '10px', backgroundColor: '#e6f3ff', borderRadius: '5px' }}>
+                    <p><strong>💡 Next Steps:</strong></p>
+                    <ul style={{ marginLeft: '20px', fontSize: '12px' }}>
+                      <li>If you found the correct employee, use their ID to access certificates</li>
+                      <li>If no employee found, check if the ID is correct or if the employee exists</li>
+                      <li>Try using the employee's email address instead of the ID</li>
+                      <li>Verify the employee has completed courses to generate certificates</li>
+                      <li><strong>💡 Tip:</strong> Go to <button 
+                        onClick={() => navigate('/employeetracking')}
+                        style={{ 
+                          background: 'none', 
+                          border: 'none', 
+                          color: '#007bff', 
+                          textDecoration: 'underline', 
+                          cursor: 'pointer',
+                          padding: 0,
+                          fontSize: '12px'
+                        }}
+                      >Employee Tracking</button> to see all employees and click on their names to view certificates</li>
+                    </ul>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     );
@@ -264,7 +514,173 @@ const CertificateDetails = () => {
               <li>Ensure the employee ID matches the certificate database</li>
             </ul>
           </div>
-          <button className="back-button" onClick={() => navigate(-1)}>⬅ Go Back</button>
+          <div style={{ marginTop: '20px' }}>
+            <button 
+              className="back-button" 
+              onClick={fetchDebugInfo}
+              style={{ marginRight: '10px', backgroundColor: '#007bff', color: 'white' }}
+            >
+              🔍 Get Debug Info
+            </button>
+            <button 
+              className="back-button" 
+              onClick={searchEmployee}
+              style={{ marginRight: '10px', backgroundColor: '#28a745', color: 'white' }}
+            >
+              👤 Search Employee
+            </button>
+            <button 
+              className="back-button" 
+              onClick={() => navigate('/employeetracking')}
+              style={{ marginRight: '10px', backgroundColor: '#6f42c1', color: 'white' }}
+            >
+              📋 Employee Tracking
+            </button>
+            <button className="back-button" onClick={() => navigate(-1)}>⬅ Go Back</button>
+          </div>
+
+          {debugInfo && (
+            <div className="debug-info" style={{ 
+              marginTop: '20px', 
+              padding: '15px', 
+              backgroundColor: '#f8f9fa', 
+              borderRadius: '8px', 
+              fontSize: '14px',
+              border: '1px solid #dee2e6'
+            }}>
+              <h4>🔧 Debug Information:</h4>
+              {debugInfo.error ? (
+                <p style={{ color: 'red' }}>❌ {debugInfo.error}</p>
+              ) : (
+                <div>
+                  <p><strong>🔍 Debug Results for ID: {debugInfo.searchedId}</strong></p>
+                  
+                  <p><strong>📊 Database Overview:</strong></p>
+                  <ul style={{ marginLeft: '20px' }}>
+                    <li><strong>Total certificates in database:</strong> {debugInfo.totalCertificates}</li>
+                    <li><strong>Matching certificates found:</strong> {debugInfo.matchingCertificates?.length || 0}</li>
+                  </ul>
+                  
+                  {debugInfo.matchingCertificates && debugInfo.matchingCertificates.length > 0 ? (
+                    <div>
+                      <p><strong>🎯 Matching Certificates:</strong></p>
+                      <ul style={{ marginLeft: '20px' }}>
+                        {debugInfo.matchingCertificates.map((cert, idx) => (
+                          <li key={idx}>
+                            <strong>{cert.courseTitle}</strong> - {cert.certificateId}
+                            <br />
+                            <small>Employee ID: {cert.employeeId} | Email: {cert.employeeEmail}</small>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : (
+                    <p style={{ color: 'orange' }}>⚠️ No certificates found matching this employee ID</p>
+                  )}
+                  
+                  <p><strong>📋 Sample Employee IDs in Database:</strong></p>
+                  <ul style={{ marginLeft: '20px', fontSize: '12px' }}>
+                    {debugInfo.allEmployeeIds?.map((empId, idx) => (
+                      <li key={idx}>{empId}</li>
+                    ))}
+                  </ul>
+                  
+                  <p><strong>📧 Sample Employee Emails in Database:</strong></p>
+                  <ul style={{ marginLeft: '20px', fontSize: '12px' }}>
+                    {debugInfo.allEmployeeEmails?.map((email, idx) => (
+                      <li key={idx}>{email}</li>
+                    ))}
+                  </ul>
+                  
+                  <div style={{ marginTop: '15px', padding: '10px', backgroundColor: '#e9ecef', borderRadius: '5px' }}>
+                    <p><strong>💡 Troubleshooting Tips:</strong></p>
+                    <ul style={{ marginLeft: '20px', fontSize: '12px' }}>
+                      <li>Check if the employee ID matches any of the sample IDs above</li>
+                      <li>Verify the employee has completed courses and certificates were generated</li>
+                      <li>Try using the employee's email address instead of the ID</li>
+                      <li>Check if the employee exists in the employee database</li>
+                    </ul>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {employeeSearch && (
+            <div className="debug-info" style={{ 
+              marginTop: '20px', 
+              padding: '15px', 
+              backgroundColor: '#f0f8ff', 
+              borderRadius: '8px', 
+              fontSize: '14px',
+              border: '1px solid #b3d9ff'
+            }}>
+              <h4>👤 Employee Search Results:</h4>
+              {employeeSearch.error ? (
+                <p style={{ color: 'red' }}>❌ {employeeSearch.error}</p>
+              ) : (
+                <div>
+                  <p><strong>🔍 Search Results for ID: {employeeSearch.searchedId}</strong></p>
+                  
+                  <p><strong>📊 Employee Database Overview:</strong></p>
+                  <ul style={{ marginLeft: '20px' }}>
+                    <li><strong>Total employees in database:</strong> {employeeSearch.totalEmployees}</li>
+                    <li><strong>Matching employees found:</strong> {employeeSearch.matchingEmployees?.length || 0}</li>
+                  </ul>
+                  
+                  {employeeSearch.matchingEmployees && employeeSearch.matchingEmployees.length > 0 ? (
+                    <div>
+                      <p><strong>🎯 Matching Employees:</strong></p>
+                      <ul style={{ marginLeft: '20px' }}>
+                        {employeeSearch.matchingEmployees.map((emp, idx) => (
+                          <li key={idx}>
+                            <strong>{emp.name}</strong> - {emp.email}
+                            <br />
+                            <small>Employee ID: {emp._id} | Department: {emp.department}</small>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : (
+                    <p style={{ color: 'orange' }}>⚠️ No employees found matching this ID</p>
+                  )}
+                  
+                  <p><strong>📋 Sample Employee IDs in Database:</strong></p>
+                  <ul style={{ marginLeft: '20px', fontSize: '12px' }}>
+                    {employeeSearch.allEmployees?.map((emp, idx) => (
+                      <li key={idx}>
+                        <strong>{emp.name}</strong> - {emp._id}
+                        <br />
+                        <small>Email: {emp.email}</small>
+                      </li>
+                    ))}
+                  </ul>
+                  
+                  <div style={{ marginTop: '15px', padding: '10px', backgroundColor: '#e6f3ff', borderRadius: '5px' }}>
+                    <p><strong>💡 Next Steps:</strong></p>
+                    <ul style={{ marginLeft: '20px', fontSize: '12px' }}>
+                      <li>If you found the correct employee, use their ID to access certificates</li>
+                      <li>If no employee found, check if the ID is correct or if the employee exists</li>
+                      <li>Try using the employee's email address instead of the ID</li>
+                      <li>Verify the employee has completed courses to generate certificates</li>
+                      <li><strong>💡 Tip:</strong> Go to <button 
+                        onClick={() => navigate('/employeetracking')}
+                        style={{ 
+                          background: 'none', 
+                          border: 'none', 
+                          color: '#007bff', 
+                          textDecoration: 'underline', 
+                          cursor: 'pointer',
+                          padding: 0,
+                          fontSize: '12px'
+                        }}
+                      >Employee Tracking</button> to see all employees and click on their names to view certificates</li>
+                    </ul>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     );

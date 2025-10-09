@@ -36,7 +36,7 @@ const TaskDetailPage = () => {
         throw new Error('Authentication token not found. Please login again.');
       }
 
-      const response = await fetch(`http://localhost:5000/api/assigned-tasks/${task._id}`, {
+  const response = await fetch(`/api/assigned-tasks/${task._id}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -102,7 +102,7 @@ const TaskDetailPage = () => {
 
       console.log('Fetching course details for task title:', taskTitle);
       
-      const response = await fetch(`http://localhost:5000/api/admin/courses/name/${encodeURIComponent(taskTitle)}`, {
+  const response = await fetch(`/api/admin/courses/name/${encodeURIComponent(taskTitle)}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',

@@ -67,6 +67,10 @@
   color: #1f2937 !important;
   font-weight: 500;
   background: transparent;
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  min-height: 40px !important;
 }
 
 .sidebar-item:hover {
@@ -331,6 +335,23 @@
 .sidebar-item:focus {
   outline: 2px solid rgba(255, 255, 255, 0.5);
   outline-offset: 2px;
+}
+
+/* Ensure Activities button is always visible */
+.sidebar-item[data-label="Activities"],
+.sidebar-item:has(span:contains("Activities")) {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  min-height: 40px !important;
+  background: transparent !important;
+}
+
+/* Force visibility for all sidebar items */
+.sidebar-section .sidebar-item {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
 /* Text selection */

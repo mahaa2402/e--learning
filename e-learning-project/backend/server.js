@@ -22,12 +22,13 @@ const app = express();
 
 console.log('🔧 Starting E-learning Server...');
 
-// Enhanced CORS configuration
+// Enhanced CORS configuration - More permissive for development
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:3001', 'http://127.0.0.1:3000', 'http://localhost:3002'],
+  origin: true, // Allow all origins for development
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization', 'x-auth-token', 'X-Access-Token', 'X-Auth-Token', 'access-token'],
-  credentials: true
+  credentials: true,
+  optionsSuccessStatus: 200 // For legacy browser support
 }));
 
 // Body parsing middleware
@@ -37,6 +38,8 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 // Enhanced debug middleware
 app.use((req, res, next) => {
   console.log(`📝 ${req.method} ${req.url}`);
+  console.log(`   Origin: ${req.headers.origin || 'No origin'}`);
+  console.log(`   User-Agent: ${req.headers['user-agent'] || 'No user-agent'}`);
   if (req.method === 'POST' || req.method === 'PUT' || req.method === 'PATCH') {
     console.log(`   Body: ${JSON.stringify(req.body, null, 2)}`);
   }
@@ -74,20 +77,28 @@ const createDefaultAdmin = async () => {
 //const mongoURI = process.env.MONGO_URI //|| "mongodb+srv://mahaashri:mahaashri%40123@e-learning-platform.wx1swy3.mongodb.net/elearning?retryWrites=true&w=majority";
 
 console.log('🔗 Attempting to connect to MongoDB...');
-//console.log('📡 Connection string:', mongoURI ? 'Present' : 'Missing');
+console.log('📡 Connection string:', process.env.MONGO_URI ? 'Present' : 'Missing');
+console.log('🗄️ Database name:', process.env.MONGO_URI ? process.env.MONGO_URI.split('/').pop() : 'Unknown');
 
 mongoose.connect(process.env.MONGO_URI, {
   serverSelectionTimeoutMS: 5000,
   socketTimeoutMS: 45000,
 })
-.then(() => {
+.then(async () => {
   console.log('✅ Connected to MongoDB Atlas');
+  console.log('🗄️ Connected to database:', mongoose.connection.db.databaseName);
+  
+  // Check employee count on startup
+  const Employee = require('./models/Employee');
+  const employeeCount = await Employee.countDocuments();
+  console.log(`👥 Current employee count in database: ${employeeCount}`);
+  
   createDefaultAdmin();
 })
 .catch(err => {
   console.error('❌ MongoDB connection failed:', err);
   console.error('🔍 Connection details:', {
-    uri: mongoURI ? 'Present' : 'Missing',
+    uri: process.env.MONGO_URI ? 'Present' : 'Missing',
     error: err.message
   });
 });

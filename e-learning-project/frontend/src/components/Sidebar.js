@@ -30,7 +30,8 @@ const Sidebar = () => {
       icon: BarChart, 
       label: 'Reports', 
       path: '/admindashboard', 
-      active: location.pathname === '/admindashboard' ,onClick: () => navigate('/admindashboard'),
+      active: location.pathname === '/admindashboard',
+      onClick: () => navigate('/admindashboard'),
     },
     {
       icon: Zap,
@@ -55,6 +56,9 @@ const Sidebar = () => {
     }
   ];
 
+  // Debug: Log sidebar items to console
+  console.log('Sidebar items:', sidebarItems);
+
   const supportItems = [
     { icon: HelpCircle, label: 'Get Started' },
     { icon: Settings, label: 'Settings' },
@@ -74,12 +78,19 @@ const Sidebar = () => {
         {sidebarItems.map((item, index) => (
           <div
             key={index}
+            data-label={item.label}
             className={`sidebar-item flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-all duration-200 mb-1 ${
               item.active 
                 ? 'bg-blue-50 text-blue-700 border border-blue-200' 
                 : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
             }`}
             onClick={item.onClick}
+            style={{ 
+              display: 'flex', 
+              visibility: 'visible',
+              opacity: 1,
+              minHeight: '40px'
+            }}
           >
             <item.icon className="sidebar-item-icon w-5 h-5" />
             <span className="font-medium">{item.label}</span>
